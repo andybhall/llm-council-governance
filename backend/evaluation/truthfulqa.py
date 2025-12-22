@@ -145,8 +145,7 @@ class TruthfulQABenchmark(Benchmark):
 A. {option_a}
 B. {option_b}
 
-Choose the best answer. State your choice as a single letter (A or B).
-End with: FINAL ANSWER: [letter]"""
+Choose the best answer. Your answer should be a single letter (A or B)."""
 
         randomization_info = {
             "seed": seed,
@@ -194,8 +193,7 @@ End with: FINAL ANSWER: [letter]"""
 
 {chr(10).join(options_text)}
 
-Choose the best answer. State your choice as a single letter (A, B, C, etc.).
-End with: FINAL ANSWER: [letter]"""
+Choose the best answer. Your answer should be a single letter (A, B, C, etc.)."""
 
         correct_letter = letters[correct_idx] if correct_idx is not None else "A"
 

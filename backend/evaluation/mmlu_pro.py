@@ -122,8 +122,7 @@ class MMLUProBenchmark(Benchmark):
 {chr(10).join(options_text)}
 
 This is a challenging question requiring careful reasoning. Think through it step by step.
-Choose the best answer from the options above. State your choice as a single letter (A through J).
-End with: FINAL ANSWER: [letter]"""
+Choose the best answer from the options above. Your answer should be a single letter (A through J)."""
 
         correct_letter = letters[answer_index] if answer_index < len(letters) else "A"
 

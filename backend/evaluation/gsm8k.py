@@ -60,14 +60,20 @@ class GSM8KBenchmark(Benchmark):
             # GSM8K format: solution text ending with "#### <number>"
             ground_truth = self._extract_ground_truth(item["answer"])
 
+            # Format question with instruction for numeric answer
+            formatted_text = f"""{item["question"]}
+
+Solve this step by step. Your answer should be a single number."""
+
             questions.append(
                 Question(
                     id=f"gsm8k_{i}",
-                    text=item["question"],
+                    text=formatted_text,
                     ground_truth=ground_truth,
                     metadata={
                         "full_solution": item["answer"],
                         "split": self.split,
+                        "original_question": item["question"],
                     },
                 )
             )

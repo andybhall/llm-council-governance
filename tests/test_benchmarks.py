@@ -255,7 +255,8 @@ class TestGSM8KWithMockDataset:
         questions = benchmark.load_questions()
 
         assert len(questions) == 3
-        assert questions[0].text == "What is 2+2?"
+        assert "What is 2+2?" in questions[0].text
+        assert "single number" in questions[0].text  # Instruction included
         assert questions[0].ground_truth == "4"
 
     def test_load_questions_limited(self, mock_dataset):
