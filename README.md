@@ -100,11 +100,11 @@ USE_CHEAP_MODELS=false
 - google/gemma-2-9b-it
 - qwen/qwen-2.5-7b-instruct
 
-**Frontier models**:
-- openai/gpt-4.1
-- google/gemini-2.5-pro-preview
-- anthropic/claude-sonnet-4
-- x-ai/grok-3
+**Frontier models** (December 2025):
+- openai/gpt-5.2
+- google/gemini-3-pro-preview
+- anthropic/claude-opus-4.5
+- x-ai/grok-4
 
 ## Project Structure
 
@@ -136,6 +136,9 @@ USE_CHEAP_MODELS=false
 
 - **GSM8K**: Grade school math word problems (86% council accuracy)
 - **TruthfulQA**: Factual questions testing resistance to common misconceptions (71% council accuracy)
+- **MMLU-Pro**: Harder multi-task language understanding with 10 answer choices (75% frontier council accuracy)
+- **AIMO**: AI Mathematical Olympiad Level 5 competition problems
+- **MMLU**: College-level multiple choice questions (configurable subjects)
 
 ## Running Tests
 

@@ -27,14 +27,14 @@ if USE_CHEAP_MODELS:
     ]
     CHAIRMAN_MODEL = "meta-llama/llama-3.1-8b-instruct"
 else:
-    # Frontier models for real pilot study
+    # Frontier models for real pilot study (December 2025)
     COUNCIL_MODELS = [
-        "openai/gpt-4.1",
-        "google/gemini-2.5-pro-preview",
-        "anthropic/claude-sonnet-4",
-        "x-ai/grok-3",
+        "openai/gpt-5.2",                    # GPT-5.2 (Dec 2025)
+        "google/gemini-3-pro-preview",       # Gemini 3 Pro (Nov 2025)
+        "anthropic/claude-opus-4.5",         # Claude Opus 4.5 (Nov 2025)
+        "x-ai/grok-4",                       # Grok 4 (Jul 2025)
     ]
-    CHAIRMAN_MODEL = "google/gemini-2.5-pro-preview"
+    CHAIRMAN_MODEL = "anthropic/claude-opus-4.5"
 
 # OpenRouter API configuration
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
