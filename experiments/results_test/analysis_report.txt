@@ -1,0 +1,65 @@
+============================================================
+LLM COUNCIL GOVERNANCE PILOT STUDY - ANALYSIS REPORT
+============================================================
+
+OVERVIEW
+----------------------------------------
+Total trials: 12
+Structures tested: 4
+Benchmarks used: 1
+Valid trials (with results): 12
+Overall accuracy: 91.7%
+
+ACCURACY BY STRUCTURE
+----------------------------------------
+  Independent → Deliberate → Synthesize: 100.0% (3/3)
+  Independent → Deliberate → Vote: 100.0% (3/3)
+  Independent → Majority Vote: 66.7% (2/3)
+  Independent → Rank → Synthesize: 100.0% (3/3)
+
+ACCURACY BY BENCHMARK
+----------------------------------------
+  GSM8K: 91.7% (11/12)
+
+ACCURACY MATRIX (Structure x Benchmark)
+----------------------------------------
+benchmark                               GSM8K
+structure                                    
+Independent → Deliberate → Synthesize  100.0%
+Independent → Deliberate → Vote        100.0%
+Independent → Majority Vote             66.7%
+Independent → Rank → Synthesize        100.0%
+
+ACCURACY WITH 95% CONFIDENCE INTERVALS
+----------------------------------------
+  Independent → Rank → Synthesize: 100.0% [43.9%, 100.0%]
+  Independent → Majority Vote: 66.7% [20.8%, 93.9%]
+  Independent → Deliberate → Vote: 100.0% [43.9%, 100.0%]
+  Independent → Deliberate → Synthesize: 100.0% [43.9%, 100.0%]
+
+STATISTICAL TESTS
+----------------------------------------
+  Chi-square test:
+    Chi-square statistic: 3.27
+    p-value: 0.3515
+    Interpretation: No significant difference between structures
+
+PAIRWISE COMPARISONS (Bonferroni corrected)
+----------------------------------------
+  Independent → Rank → Synthesize vs Independent → Majority Vote: +33.3% (p=1.0000)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Vote: +0.0% (p=1.0000)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Synthesize: +0.0% (p=1.0000)
+  Independent → Majority Vote vs Independent → Deliberate → Vote: -33.3% (p=1.0000)
+  Independent → Majority Vote vs Independent → Deliberate → Synthesize: -33.3% (p=1.0000)
+  Independent → Deliberate → Vote vs Independent → Deliberate → Synthesize: +0.0% (p=1.0000)
+
+TIMING SUMMARY (seconds)
+----------------------------------------
+  Independent → Deliberate → Synthesize: mean=24.96s, std=12.19s
+  Independent → Deliberate → Vote: mean=15.53s, std=7.78s
+  Independent → Majority Vote: mean=12.23s, std=9.55s
+  Independent → Rank → Synthesize: mean=23.08s, std=7.90s
+
+============================================================
+END OF REPORT
+============================================================

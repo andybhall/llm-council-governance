@@ -1,0 +1,124 @@
+============================================================
+LLM COUNCIL GOVERNANCE PILOT STUDY - ANALYSIS REPORT
+============================================================
+
+OVERVIEW
+----------------------------------------
+Total trials: 960
+Structures tested: 4
+Benchmarks used: 2
+Valid trials (with results): 959
+Overall accuracy: 78.5%
+
+INDIVIDUAL MODEL ACCURACY
+----------------------------------------
+  gemma-2-9b-it: 51.7% (124/240)
+  llama-3.1-8b-instruct: 38.8% (93/240)
+  qwen-2.5-7b-instruct: 37.9% (91/240)
+  mistral-7b-instruct: 18.3% (44/240)
+
+INDIVIDUAL MODEL ACCURACY BY BENCHMARK
+----------------------------------------
+  GSM8K:
+    gemma-2-9b-it: 22.5% (27/120)
+    llama-3.1-8b-instruct: 17.5% (21/120)
+    mistral-7b-instruct: 6.7% (8/120)
+    qwen-2.5-7b-instruct: 5.0% (6/120)
+  TruthfulQA:
+    gemma-2-9b-it: 80.8% (97/120)
+    qwen-2.5-7b-instruct: 70.8% (85/120)
+    llama-3.1-8b-instruct: 60.0% (72/120)
+    mistral-7b-instruct: 30.0% (36/120)
+
+ACCURACY BY STRUCTURE
+----------------------------------------
+  Independent → Deliberate → Synthesize: 78.3% (188/240)
+  Independent → Deliberate → Vote: 79.5% (190/239)
+  Independent → Majority Vote: 81.7% (196/240)
+  Independent → Rank → Synthesize: 74.6% (179/240)
+
+ACCURACY BY BENCHMARK
+----------------------------------------
+  GSM8K: 86.0% (412/479)
+  TruthfulQA: 71.0% (341/480)
+
+ACCURACY MATRIX (Structure x Benchmark)
+----------------------------------------
+benchmark                              GSM8K TruthfulQA
+structure                                              
+Independent → Deliberate → Synthesize  85.8%      70.8%
+Independent → Deliberate → Vote        89.1%      70.0%
+Independent → Majority Vote            88.3%      75.0%
+Independent → Rank → Synthesize        80.8%      68.3%
+
+ACCURACY WITH 95% CONFIDENCE INTERVALS
+----------------------------------------
+  Independent → Rank → Synthesize: 74.6% [68.7%, 79.7%]
+  Independent → Majority Vote: 81.7% [76.3%, 86.1%]
+  Independent → Deliberate → Vote: 79.5% [73.9%, 84.1%]
+  Independent → Deliberate → Synthesize: 78.3% [72.7%, 83.1%]
+
+STATISTICAL TESTS
+----------------------------------------
+  Chi-square test:
+    Chi-square statistic: 3.75
+    p-value: 0.2892
+    Interpretation: No significant difference between structures
+
+PAIRWISE COMPARISONS (Bonferroni corrected)
+----------------------------------------
+  Independent → Rank → Synthesize vs Independent → Majority Vote: -7.1% (p=0.3631)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Vote: -4.9% (p=1.0000)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Synthesize: -3.7% (p=1.0000)
+  Independent → Majority Vote vs Independent → Deliberate → Vote: +2.2% (p=1.0000)
+  Independent → Majority Vote vs Independent → Deliberate → Synthesize: +3.3% (p=1.0000)
+  Independent → Deliberate → Vote vs Independent → Deliberate → Synthesize: +1.2% (p=1.0000)
+
+T-TESTS: STRUCTURES VS BEST INDIVIDUAL MODEL
+----------------------------------------
+  Best individual model: gemma-2-9b-it (51.7%)
+
+  Rank → Synthesize: 74.6% vs 51.7% (diff=+22.9%, t=5.71, p=0.0000)*
+  Majority Vote: 81.7% vs 51.7% (diff=+30.0%, t=8.01, p=0.0000)*
+  Deliberate → Vote: 79.5% vs 51.9% (diff=+27.6%, t=6.88, p=0.0000)*
+  Deliberate → Synthesize: 78.3% vs 51.7% (diff=+26.7%, t=6.77, p=0.0000)*
+
+DELIBERATION ANALYSIS
+----------------------------------------
+  Answer changes after deliberation:
+    Total changes:        455
+    Changed to correct:   241
+    Changed to wrong:     116
+    Net benefit:          +125 answers
+
+  Agreement levels (groupthink indicator):
+    Before deliberation:  75.9%
+    After deliberation:   86.7%
+    Change:               +10.9%
+
+  By model (change rate | fix rate when wrong | break rate when correct):
+    llama-3.1-8b-instruct: 35.6% | 49.5% | 8.1%
+    mistral-7b-instruct: 19.6% | 39.8% | 5.8%
+    gemma-2-9b-it: 27.6% | 54.9% | 15.2%
+    qwen-2.5-7b-instruct: 19.6% | 32.6% | 7.4%
+
+  Interpretation:
+    Deliberation increases agreement (potential groupthink)
+    Net positive: deliberation fixes more than it breaks (+125)
+    Simple majority vote may outperform deliberation by preserving independence
+
+TIMING SUMMARY (seconds)
+----------------------------------------
+  Independent → Deliberate → Synthesize: mean=21.55s, std=13.32s
+  Independent → Deliberate → Vote: mean=30.13s, std=73.56s
+  Independent → Majority Vote: mean=13.20s, std=13.44s
+  Independent → Rank → Synthesize: mean=18.47s, std=32.69s
+
+ERRORS
+----------------------------------------
+  Total errors: 1
+    Independent → Deliberate → Vote: 1
+
+============================================================
+END OF REPORT
+============================================================
