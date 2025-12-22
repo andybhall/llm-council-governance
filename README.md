@@ -8,14 +8,15 @@ Karpathy proposed and built an "llm council" to advise a user. This raises an in
 
 ## Key Findings
 
-### 1. Councils massively outperform individual models
+### 1. The best individual model matches council performance
 
-| | Individual Models | Council |
-|---|-------------------|---------|
-| Accuracy | 18-52% | **75-82%** |
-| Improvement | — | **+23 to +30 percentage points** |
+| | Best Individual (Gemma) | Council |
+|---|-------------------------|---------|
+| Accuracy | 81.2% | 75-82% |
+| GSM8K | 79.7% | 81-89% |
+| TruthfulQA | 82.7% | 68-75% |
 
-All council structures significantly beat the best individual model (p < 0.0001). This confirms findings from [Du et al. (2023)](https://arxiv.org/abs/2305.14325), who showed that multi-agent debate among LLM instances improves accuracy on math and factual tasks.
+Contrary to expectations from [Du et al. (2023)](https://arxiv.org/abs/2305.14325), adding weaker models to the best model doesn't consistently improve accuracy. The council's benefit depends on having models with complementary strengths.
 
 ### 2. Simple majority voting wins
 
@@ -52,27 +53,29 @@ Meanwhile, majority voting preserves the **independence** that makes "wisdom of 
 
 ### Councils vs Individual Models
 
-The "wisdom of crowds" effect is dramatic. Individual 7-9B models achieve only 18-52% accuracy, but combining them into a council achieves 75-82%.
+Individual model performance varies widely (42-81%), with the best model (Gemma) matching council performance.
 
 #### Individual Model Performance (Pilot Study)
 
 | Model | Overall | GSM8K | TruthfulQA |
 |-------|---------|-------|------------|
-| Gemma 2 9B | 51.7% | 22.5% | 80.8% |
-| Llama 3.1 8B | 38.8% | 17.5% | 60.0% |
-| Qwen 2.5 7B | 37.9% | 5.0% | 70.8% |
-| Mistral 7B | 18.3% | 6.7% | 30.0% |
+| Gemma 2 9B | 81.2% | 79.7% | 82.7% |
+| Qwen 2.5 7B | 77.2% | 84.8% | 69.6% |
+| Llama 3.1 8B | 66.8% | 74.5% | 59.2% |
+| Mistral 7B | 42.0% | 35.3% | 48.8% |
 
 #### Council Performance vs Best Individual Model
 
-All council structures significantly outperform the best individual model (p < 0.0001):
+Paired t-tests comparing each structure's council outcome with the best individual model's (Gemma) outcome on the same trial:
 
-| Structure | Council | Best Individual | Improvement | t-statistic |
-|-----------|---------|-----------------|-------------|-------------|
-| **Majority Vote** | **81.7%** | 51.7% | **+30.0%** | 8.01 |
-| Deliberate → Vote | 79.5% | 51.9% | +27.6% | 6.88 |
-| Deliberate → Synthesize | 78.3% | 51.7% | +26.7% | 6.77 |
-| Rank → Synthesize | 74.6% | 51.7% | +22.9% | 5.71 |
+| Structure | Council | Gemma | Difference | Significant? |
+|-----------|---------|-------|------------|--------------|
+| **Majority Vote** | **81.7%** | 84.6% | -2.9% | No |
+| Deliberate → Vote | 79.5% | 84.9% | -5.4% | Yes (p=0.03) |
+| Deliberate → Synthesize | 78.3% | 82.1% | -3.7% | No |
+| Rank → Synthesize | 74.6% | 73.3% | +1.3% | No |
+
+**Key insight:** Adding weaker models to the council can actually *hurt* performance. Deliberate→Vote significantly underperforms vs just using Gemma alone.
 
 ![Council vs Individual](experiments/results/council_vs_individual.png)
 

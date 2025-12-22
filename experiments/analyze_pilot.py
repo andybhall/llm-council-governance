@@ -358,23 +358,40 @@ def _extract_number_from_response(response: str) -> Optional[str]:
     """
     Extract a numerical answer from a model response (for GSM8K).
     """
-    # Try FINAL ANSWER pattern first
+    # Try FINAL ANSWER pattern first (highest priority)
     match = re.search(
-        r"FINAL ANSWER:\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)", response, re.IGNORECASE
+        r"FINAL ANSWER:\s*\$?(-?\d+(?:,\d{3})*(?:\.\d+)?)", response, re.IGNORECASE
     )
     if match:
         return _normalize_number(match.group(1))
 
-    # Try to find any number after "answer is" or similar
+    # Try **Answer:** pattern (common in markdown responses)
     match = re.search(
-        r"(?:answer is|equals?|=)\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+        r"\*\*Answer:?\*\*[:\s]*\$?(-?\d+(?:,\d{3})*(?:\.\d+)?)", response, re.IGNORECASE
+    )
+    if match:
+        return _normalize_number(match.group(1))
+
+    # Try "the answer is" pattern (more specific than just "=")
+    match = re.search(
+        r"(?:the answer is|answer is|answer:)\s*\$?(-?\d+(?:,\d{3})*(?:\.\d+)?)",
         response,
         re.IGNORECASE,
     )
     if match:
         return _normalize_number(match.group(1))
 
-    # Fallback: find the last number in the response
+    # Try boxed format: \boxed{number}
+    match = re.search(r"\\boxed\{(-?\d+(?:,\d{3})*(?:\.\d+)?)\}", response)
+    if match:
+        return _normalize_number(match.group(1))
+
+    # Fallback: find the last number in the response (skip single digits that are likely step numbers)
+    numbers = re.findall(r"(?<!\d)(-?\d{2,}(?:,\d{3})*(?:\.\d+)?)(?!\d)", response)
+    if numbers:
+        return _normalize_number(numbers[-1])
+
+    # If no multi-digit numbers, try any number
     numbers = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?", response)
     if numbers:
         return _normalize_number(numbers[-1])
@@ -449,6 +466,7 @@ def compute_individual_model_accuracy(df: pd.DataFrame) -> pd.DataFrame:
     Compute accuracy for each individual model acting alone.
 
     Extracts each model's stage1 response and evaluates it against the expected answer.
+    Uses ALL trials since LLM responses are non-deterministic (each trial has unique responses).
 
     Args:
         df: DataFrame with experiment results (must have stage1_responses, expected, benchmark)
@@ -462,15 +480,11 @@ def compute_individual_model_accuracy(df: pd.DataFrame) -> pd.DataFrame:
     # Filter to valid rows with stage1_responses
     valid_df = df[df["stage1_responses"].notna()].copy()
 
-    # We need to avoid double-counting since same question appears for each structure
-    # Group by question_id, replication, benchmark to get unique question instances
-    # Use only rows from one structure to avoid duplication
-    first_structure = valid_df["structure"].iloc[0] if len(valid_df) > 0 else None
-    unique_df = valid_df[valid_df["structure"] == first_structure].copy()
-
+    # Use ALL trials - LLM responses are non-deterministic, so each trial
+    # (across structures and replications) has unique stage1 responses
     model_results = {}
 
-    for _, row in unique_df.iterrows():
+    for _, row in valid_df.iterrows():
         stage1 = row.get("stage1_responses", {})
         expected = row.get("expected", "")
         benchmark = row.get("benchmark", "")
@@ -506,6 +520,8 @@ def compute_individual_model_accuracy_by_benchmark(df: pd.DataFrame) -> pd.DataF
     """
     Compute accuracy for each individual model, broken down by benchmark.
 
+    Uses ALL trials since LLM responses are non-deterministic.
+
     Args:
         df: DataFrame with experiment results
 
@@ -517,13 +533,10 @@ def compute_individual_model_accuracy_by_benchmark(df: pd.DataFrame) -> pd.DataF
 
     valid_df = df[df["stage1_responses"].notna()].copy()
 
-    # Use only rows from one structure to avoid duplication
-    first_structure = valid_df["structure"].iloc[0] if len(valid_df) > 0 else None
-    unique_df = valid_df[valid_df["structure"] == first_structure].copy()
-
+    # Use ALL trials - LLM responses are non-deterministic
     model_results = {}
 
-    for _, row in unique_df.iterrows():
+    for _, row in valid_df.iterrows():
         stage1 = row.get("stage1_responses", {})
         expected = row.get("expected", "")
         benchmark = row.get("benchmark", "")
@@ -712,38 +725,29 @@ def run_ttest_vs_best_individual(df: pd.DataFrame) -> List[Dict[str, Any]]:
     best_model = model_acc.iloc[0]["model"]
     best_model_acc = model_acc.iloc[0]["accuracy"]
 
-    # Build a mapping of (question_id, replication) -> best model correctness
-    first_structure = valid_df["structure"].iloc[0]
-    unique_df = valid_df[valid_df["structure"] == first_structure].copy()
-
-    best_model_correctness = {}
-    for _, row in unique_df.iterrows():
-        key = (row["question_id"], row["replication"])
-        stage1 = row.get("stage1_responses", {})
-        expected = row.get("expected", "")
-        benchmark = row.get("benchmark", "")
-
-        if isinstance(stage1, dict) and best_model in stage1:
-            response = stage1[best_model]
-            correct = _evaluate_individual_response(response, expected, benchmark)
-            best_model_correctness[key] = 1 if correct else 0
-
     # Run t-tests for each structure
+    # For each structure, compare council outcome with best model's stage1 outcome
+    # from the SAME trial (since LLM responses are non-deterministic)
     results = []
     structures = valid_df["structure"].unique()
 
     for structure in structures:
         struct_df = valid_df[valid_df["structure"] == structure]
 
-        # Build paired arrays
+        # Build paired arrays using each trial's own stage1 responses
         struct_correct = []
         model_correct = []
 
         for _, row in struct_df.iterrows():
-            key = (row["question_id"], row["replication"])
-            if key in best_model_correctness:
+            stage1 = row.get("stage1_responses", {})
+            expected = row.get("expected", "")
+            benchmark = row.get("benchmark", "")
+
+            if isinstance(stage1, dict) and best_model in stage1:
+                response = stage1[best_model]
+                individual_correct = _evaluate_individual_response(response, expected, benchmark)
                 struct_correct.append(1 if row["is_correct"] else 0)
-                model_correct.append(best_model_correctness[key])
+                model_correct.append(1 if individual_correct else 0)
 
         if len(struct_correct) < 2:
             continue

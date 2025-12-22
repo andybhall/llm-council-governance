@@ -12,23 +12,23 @@ Overall accuracy: 78.5%
 
 INDIVIDUAL MODEL ACCURACY
 ----------------------------------------
-  gemma-2-9b-it: 51.7% (124/240)
-  llama-3.1-8b-instruct: 38.8% (93/240)
-  qwen-2.5-7b-instruct: 37.9% (91/240)
-  mistral-7b-instruct: 18.3% (44/240)
+  gemma-2-9b-it: 81.2% (779/959)
+  qwen-2.5-7b-instruct: 77.2% (740/959)
+  llama-3.1-8b-instruct: 66.8% (641/959)
+  mistral-7b-instruct: 42.0% (403/959)
 
 INDIVIDUAL MODEL ACCURACY BY BENCHMARK
 ----------------------------------------
   GSM8K:
-    gemma-2-9b-it: 22.5% (27/120)
-    llama-3.1-8b-instruct: 17.5% (21/120)
-    mistral-7b-instruct: 6.7% (8/120)
-    qwen-2.5-7b-instruct: 5.0% (6/120)
+    qwen-2.5-7b-instruct: 84.8% (406/479)
+    gemma-2-9b-it: 79.7% (382/479)
+    llama-3.1-8b-instruct: 74.5% (357/479)
+    mistral-7b-instruct: 35.3% (169/479)
   TruthfulQA:
-    gemma-2-9b-it: 80.8% (97/120)
-    qwen-2.5-7b-instruct: 70.8% (85/120)
-    llama-3.1-8b-instruct: 60.0% (72/120)
-    mistral-7b-instruct: 30.0% (36/120)
+    gemma-2-9b-it: 82.7% (397/480)
+    qwen-2.5-7b-instruct: 69.6% (334/480)
+    llama-3.1-8b-instruct: 59.2% (284/480)
+    mistral-7b-instruct: 48.8% (234/480)
 
 ACCURACY BY STRUCTURE
 ----------------------------------------
@@ -76,35 +76,35 @@ PAIRWISE COMPARISONS (Bonferroni corrected)
 
 T-TESTS: STRUCTURES VS BEST INDIVIDUAL MODEL
 ----------------------------------------
-  Best individual model: gemma-2-9b-it (51.7%)
+  Best individual model: gemma-2-9b-it (73.3%)
 
-  Rank → Synthesize: 74.6% vs 51.7% (diff=+22.9%, t=5.71, p=0.0000)*
-  Majority Vote: 81.7% vs 51.7% (diff=+30.0%, t=8.01, p=0.0000)*
-  Deliberate → Vote: 79.5% vs 51.9% (diff=+27.6%, t=6.88, p=0.0000)*
-  Deliberate → Synthesize: 78.3% vs 51.7% (diff=+26.7%, t=6.77, p=0.0000)*
+  Rank → Synthesize: 74.6% vs 73.3% (diff=+1.3%, t=0.37, p=0.7106)
+  Majority Vote: 81.7% vs 84.6% (diff=-2.9%, t=-1.22, p=0.2238)
+  Deliberate → Vote: 79.5% vs 84.9% (diff=-5.4%, t=-2.15, p=0.0323)*
+  Deliberate → Synthesize: 78.3% vs 82.1% (diff=-3.7%, t=-1.38, p=0.1704)
 
 DELIBERATION ANALYSIS
 ----------------------------------------
   Answer changes after deliberation:
-    Total changes:        455
-    Changed to correct:   241
-    Changed to wrong:     116
-    Net benefit:          +125 answers
+    Total changes:        361
+    Changed to correct:   174
+    Changed to wrong:     106
+    Net benefit:          +68 answers
 
   Agreement levels (groupthink indicator):
-    Before deliberation:  75.9%
-    After deliberation:   86.7%
-    Change:               +10.9%
+    Before deliberation:  80.8%
+    After deliberation:   89.8%
+    Change:               +9.0%
 
   By model (change rate | fix rate when wrong | break rate when correct):
-    llama-3.1-8b-instruct: 35.6% | 49.5% | 8.1%
-    mistral-7b-instruct: 19.6% | 39.8% | 5.8%
-    gemma-2-9b-it: 27.6% | 54.9% | 15.2%
-    qwen-2.5-7b-instruct: 19.6% | 32.6% | 7.4%
+    llama-3.1-8b-instruct: 28.7% | 49.4% | 7.1%
+    mistral-7b-instruct: 18.3% | 38.2% | 5.7%
+    gemma-2-9b-it: 23.0% | 43.0% | 14.3%
+    qwen-2.5-7b-instruct: 12.3% | 24.2% | 3.9%
 
   Interpretation:
     Deliberation increases agreement (potential groupthink)
-    Net positive: deliberation fixes more than it breaks (+125)
+    Net positive: deliberation fixes more than it breaks (+68)
     Simple majority vote may outperform deliberation by preserving independence
 
 TIMING SUMMARY (seconds)
