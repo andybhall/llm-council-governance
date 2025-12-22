@@ -191,13 +191,11 @@ async def test_structure_c_vote_result(mock_openrouter):
     assert "chairman_tiebreaker" in result.stage3_data
 
 
-def test_build_initial_prompt():
-    """Test initial prompt includes FINAL ANSWER instruction."""
-    structure = DeliberateVoteStructure(
-        council_models=["m1"],
-        chairman_model="chair",
-    )
-    prompt = structure._build_initial_prompt("What is 2+2?")
+def test_build_stage1_prompt():
+    """Test that the shared prompt builder includes FINAL ANSWER instruction."""
+    from backend.governance.utils import build_stage1_prompt
+
+    prompt = build_stage1_prompt("What is 2+2?")
 
     assert "What is 2+2?" in prompt
     assert "FINAL ANSWER:" in prompt

@@ -319,6 +319,126 @@ def run_pairwise_tests(
     return results
 
 
+def run_paired_mcnemar_tests(
+    df: pd.DataFrame, alpha: float = 0.05
+) -> List[Dict[str, Any]]:
+    """
+    Run paired McNemar's tests between structures.
+
+    McNemar's test is appropriate when comparing two classifiers on the same
+    data (paired observations). It focuses on disagreements between the methods.
+
+    This is more appropriate than independent z-tests because the same questions
+    are evaluated by all structures.
+
+    Args:
+        df: DataFrame with experiment results
+        alpha: Significance level before correction
+
+    Returns:
+        List of test results for each pair
+    """
+    if df.empty or "is_correct" not in df.columns:
+        return []
+
+    valid_df = df[df["is_correct"].notna()].copy()
+    structures = valid_df["structure"].unique()
+
+    if len(structures) < 2:
+        return []
+
+    from itertools import combinations
+
+    from scipy import stats
+
+    results = []
+    n_comparisons = len(list(combinations(structures, 2)))
+    corrected_alpha = alpha / n_comparisons  # Bonferroni correction
+
+    for s1, s2 in combinations(structures, 2):
+        # Get paired results by question_id
+        df1 = valid_df[valid_df["structure"] == s1].set_index("question_id")
+        df2 = valid_df[valid_df["structure"] == s2].set_index("question_id")
+
+        # Find common questions
+        common_questions = df1.index.intersection(df2.index)
+
+        if len(common_questions) < 5:
+            continue
+
+        # Build contingency table for McNemar's test
+        # Count: both correct, s1 correct s2 wrong, s1 wrong s2 correct, both wrong
+        n_11 = 0  # Both correct
+        n_10 = 0  # s1 correct, s2 wrong
+        n_01 = 0  # s1 wrong, s2 correct
+        n_00 = 0  # Both wrong
+
+        for q_id in common_questions:
+            s1_correct = df1.loc[q_id, "is_correct"]
+            s2_correct = df2.loc[q_id, "is_correct"]
+
+            # Handle case where there might be multiple rows per question
+            if isinstance(s1_correct, pd.Series):
+                s1_correct = s1_correct.iloc[0]
+            if isinstance(s2_correct, pd.Series):
+                s2_correct = s2_correct.iloc[0]
+
+            if s1_correct and s2_correct:
+                n_11 += 1
+            elif s1_correct and not s2_correct:
+                n_10 += 1
+            elif not s1_correct and s2_correct:
+                n_01 += 1
+            else:
+                n_00 += 1
+
+        # McNemar's test statistic (with continuity correction)
+        # Uses only the discordant pairs (n_10, n_01)
+        n_discordant = n_10 + n_01
+
+        if n_discordant == 0:
+            # No disagreements - cannot compute McNemar's
+            p_value = 1.0
+            chi2 = 0.0
+        else:
+            # McNemar's chi-square with continuity correction
+            chi2 = (abs(n_10 - n_01) - 1) ** 2 / (n_10 + n_01)
+            p_value = 1 - stats.chi2.cdf(chi2, df=1)
+
+        # For small samples, use exact binomial test
+        if n_discordant < 25 and n_discordant > 0:
+            # Exact McNemar's test (binomial)
+            # Under null, P(s1 wins | discordant) = 0.5
+            p_value = stats.binomtest(
+                n_10, n_discordant, 0.5, alternative="two-sided"
+            ).pvalue
+
+        n_total = len(common_questions)
+        p1 = (n_11 + n_10) / n_total  # Structure 1 accuracy
+        p2 = (n_11 + n_01) / n_total  # Structure 2 accuracy
+
+        results.append(
+            {
+                "structure_1": s1,
+                "structure_2": s2,
+                "accuracy_1": p1,
+                "accuracy_2": p2,
+                "difference": p1 - p2,
+                "n_pairs": n_total,
+                "n_discordant": n_discordant,
+                "n_s1_wins": n_10,
+                "n_s2_wins": n_01,
+                "chi2_statistic": chi2,
+                "p_value": p_value,
+                "p_value_corrected": min(p_value * n_comparisons, 1.0),
+                "significant": p_value < corrected_alpha,
+                "test": "McNemar's test (paired)",
+            }
+        )
+
+    return results
+
+
 def compute_timing_summary(df: pd.DataFrame) -> pd.DataFrame:
     """
     Compute timing statistics by structure.
@@ -357,24 +477,28 @@ def compute_timing_summary(df: pd.DataFrame) -> pd.DataFrame:
 def _extract_number_from_response(response: str) -> Optional[str]:
     """
     Extract a numerical answer from a model response (for GSM8K).
+
+    Handles currency symbols ($) and various answer formats.
     """
-    # Try FINAL ANSWER pattern first (highest priority)
+    # Try FINAL ANSWER pattern first (highest priority) - allow optional $ with space
     match = re.search(
-        r"FINAL ANSWER:\s*\$?(-?\d+(?:,\d{3})*(?:\.\d+)?)", response, re.IGNORECASE
+        r"FINAL ANSWER:\s*\$?\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)", response, re.IGNORECASE
     )
     if match:
         return _normalize_number(match.group(1))
 
     # Try **Answer:** pattern (common in markdown responses)
     match = re.search(
-        r"\*\*Answer:?\*\*[:\s]*\$?(-?\d+(?:,\d{3})*(?:\.\d+)?)", response, re.IGNORECASE
+        r"\*\*Answer:?\*\*[:\s]*\$?\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+        response,
+        re.IGNORECASE,
     )
     if match:
         return _normalize_number(match.group(1))
 
     # Try "the answer is" pattern (more specific than just "=")
     match = re.search(
-        r"(?:the answer is|answer is|answer:)\s*\$?(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+        r"(?:the answer is|answer is|answer:)\s*\$?\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
         response,
         re.IGNORECASE,
     )
@@ -916,17 +1040,21 @@ def generate_report(
         lines.append("  (scipy not available for statistical tests)")
     lines.append("")
 
-    # Pairwise comparisons
-    lines.append("PAIRWISE COMPARISONS (Bonferroni corrected)")
+    # Pairwise comparisons using McNemar's test (paired)
+    lines.append("PAIRWISE COMPARISONS (McNemar's test, Bonferroni corrected)")
     lines.append("-" * 40)
     try:
-        pairwise = run_pairwise_tests(df)
+        pairwise = run_paired_mcnemar_tests(df)
         if pairwise:
             for result in pairwise:
                 sig = "*" if result["significant"] else ""
                 lines.append(
                     f"  {result['structure_1']} vs {result['structure_2']}: "
                     f"{result['difference']:+.1%} (p={result['p_value_corrected']:.4f}){sig}"
+                )
+                lines.append(
+                    f"    Discordant pairs: {result['n_discordant']} "
+                    f"({result['n_s1_wins']} s1 wins, {result['n_s2_wins']} s2 wins)"
                 )
         else:
             lines.append("  Insufficient data for pairwise tests")

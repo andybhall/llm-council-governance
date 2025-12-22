@@ -112,27 +112,30 @@ class GSM8KBenchmark(Benchmark):
         Extract a numerical answer from a model response.
 
         Tries multiple patterns:
-        1. "FINAL ANSWER: <number>"
-        2. Last number in the response
+        1. "FINAL ANSWER: [optional $]<number>"
+        2. "answer is [optional $]<number>"
+        3. Last number in the response
         """
-        # Try FINAL ANSWER pattern first
+        # Try FINAL ANSWER pattern first - allow optional $ prefix
         match = re.search(
-            r"FINAL ANSWER:\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)", response, re.IGNORECASE
-        )
-        if match:
-            return self._normalize_number(match.group(1))
-
-        # Try to find any number after "answer is" or similar
-        match = re.search(
-            r"(?:answer is|equals?|=)\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+            r"FINAL ANSWER:\s*\$?\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
             response,
             re.IGNORECASE,
         )
         if match:
             return self._normalize_number(match.group(1))
 
-        # Fallback: find the last number in the response
-        numbers = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?", response)
+        # Try to find any number after "answer is" or similar - allow optional $
+        match = re.search(
+            r"(?:the answer is|answer is|equals?)\s*\$?\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+            response,
+            re.IGNORECASE,
+        )
+        if match:
+            return self._normalize_number(match.group(1))
+
+        # Fallback: find the last number in the response (strip any $ prefix)
+        numbers = re.findall(r"\$?\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)", response)
         if numbers:
             return self._normalize_number(numbers[-1])
 

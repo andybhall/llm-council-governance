@@ -4,7 +4,7 @@ import re
 from typing import Dict, List, Tuple
 
 from backend.governance.base import CouncilResult, GovernanceStructure
-from backend.governance.utils import extract_final_answer_with_fallback
+from backend.governance.utils import build_stage1_prompt, extract_final_answer_with_fallback
 from backend.openrouter import query_model, query_models_parallel
 
 
@@ -47,8 +47,9 @@ class IndependentRankSynthesize(GovernanceStructure):
         )
 
     async def _stage1_collect_responses(self, query: str) -> Dict[str, str]:
-        """Stage 1: Query all council models in parallel."""
-        messages = [{"role": "user", "content": query}]
+        """Stage 1: Query all council models in parallel with standardized prompt."""
+        prompt = build_stage1_prompt(query)
+        messages = [{"role": "user", "content": prompt}]
         results = await query_models_parallel(self.council_models, messages)
 
         return {

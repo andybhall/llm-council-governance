@@ -102,6 +102,25 @@ def normalize_answer(answer: str) -> str:
     return normalized
 
 
+def build_stage1_prompt(query: str) -> str:
+    """
+    Build the standard Stage-1 prompt with FINAL ANSWER instruction.
+
+    All governance structures should use this for Stage-1 to ensure
+    consistent prompting across structures (eliminates prompting as a confound).
+
+    Args:
+        query: The raw query/question text
+
+    Returns:
+        Formatted prompt with FINAL ANSWER instruction
+    """
+    return f"""{query}
+
+After your reasoning, state your final answer in this exact format:
+FINAL ANSWER: [your answer]"""
+
+
 def majority_vote_normalized(
     answers: List[str], tiebreaker: Optional[str] = None
 ) -> str:
@@ -140,3 +159,141 @@ def majority_vote_normalized(
     # Return first original form of winning normalized answer
     winning_norm = winners[0]
     return normalized_to_originals[winning_norm][0]
+
+
+def normalize_numeric_answer(answer: str) -> Optional[float]:
+    """
+    Normalize a numeric answer for voting comparison.
+
+    Converts string to float for numeric comparison.
+    Handles commas, dollar signs, and whitespace.
+
+    Args:
+        answer: String representation of number
+
+    Returns:
+        Float value or None if not parseable
+    """
+    if not answer:
+        return None
+
+    # Remove common prefixes/suffixes
+    cleaned = answer.strip()
+    cleaned = cleaned.lstrip("$")
+    cleaned = cleaned.replace(",", "")
+    cleaned = cleaned.rstrip(".")
+
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def normalize_letter_answer(answer: str) -> Optional[str]:
+    """
+    Normalize a letter answer for voting comparison.
+
+    Extracts and uppercases single letter (A-J).
+
+    Args:
+        answer: String possibly containing a letter answer
+
+    Returns:
+        Uppercase letter or None if not found
+    """
+    if not answer:
+        return None
+
+    # Look for single letter
+    match = re.search(r"([A-Ja-j])", answer.strip())
+    if match:
+        return match.group(1).upper()
+    return None
+
+
+def majority_vote_numeric(
+    answers: List[str], tiebreaker: Optional[str] = None
+) -> Optional[str]:
+    """
+    Majority vote for numeric answers, comparing by value not string.
+
+    This ensures that "42", "42.0", and "$42" are all treated as the same vote.
+
+    Args:
+        answers: List of answer strings (numbers)
+        tiebreaker: Optional tiebreaker answer
+
+    Returns:
+        Winning answer in original string form, or None if no valid answers
+    """
+    if not answers:
+        return None
+
+    # Group by numeric value
+    value_to_originals: dict[float, list[str]] = {}
+    for ans in answers:
+        val = normalize_numeric_answer(ans)
+        if val is not None:
+            if val not in value_to_originals:
+                value_to_originals[val] = []
+            value_to_originals[val].append(ans)
+
+    if not value_to_originals:
+        return None
+
+    # Count votes
+    counts = {val: len(originals) for val, originals in value_to_originals.items()}
+    max_count = max(counts.values())
+    winners = [val for val, count in counts.items() if count == max_count]
+
+    # Handle tiebreaker
+    if len(winners) > 1 and tiebreaker:
+        tb_val = normalize_numeric_answer(tiebreaker)
+        if tb_val in winners:
+            winners = [tb_val]
+
+    # Return first original form of winner
+    winning_val = winners[0]
+    return value_to_originals[winning_val][0]
+
+
+def majority_vote_letter(
+    answers: List[str], tiebreaker: Optional[str] = None
+) -> Optional[str]:
+    """
+    Majority vote for letter answers (A, B, C, etc.).
+
+    Normalizes to uppercase before comparing.
+
+    Args:
+        answers: List of answer strings (letters)
+        tiebreaker: Optional tiebreaker answer
+
+    Returns:
+        Winning letter (uppercase), or None if no valid answers
+    """
+    if not answers:
+        return None
+
+    # Normalize to uppercase letters
+    normalized = []
+    for ans in answers:
+        letter = normalize_letter_answer(ans)
+        if letter:
+            normalized.append(letter)
+
+    if not normalized:
+        return None
+
+    # Count votes
+    counts = Counter(normalized)
+    max_count = max(counts.values())
+    winners = [letter for letter, count in counts.items() if count == max_count]
+
+    # Handle tiebreaker
+    if len(winners) > 1 and tiebreaker:
+        tb_letter = normalize_letter_answer(tiebreaker)
+        if tb_letter in winners:
+            winners = [tb_letter]
+
+    return winners[0]

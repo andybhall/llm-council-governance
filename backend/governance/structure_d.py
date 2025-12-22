@@ -3,7 +3,7 @@
 from typing import Dict, Tuple
 
 from backend.governance.base import CouncilResult, GovernanceStructure
-from backend.governance.utils import extract_final_answer_with_fallback
+from backend.governance.utils import build_stage1_prompt, extract_final_answer_with_fallback
 from backend.openrouter import query_model, query_models_parallel
 
 
@@ -43,13 +43,6 @@ class DeliberateSynthesizeStructure(GovernanceStructure):
                 "synthesis": synthesis,
             },
         )
-
-    def _build_initial_prompt(self, query: str) -> str:
-        """Build initial prompt with FINAL ANSWER instruction."""
-        return f"""{query}
-
-After your reasoning, state your final answer in this exact format:
-FINAL ANSWER: [your answer]"""
 
     def _build_deliberation_prompt(
         self,
@@ -122,7 +115,7 @@ FINAL ANSWER: [your synthesized answer]"""
 
     async def _stage1_collect_responses(self, query: str) -> Dict[str, str]:
         """Stage 1: Query all council models with FINAL ANSWER instruction."""
-        prompt = self._build_initial_prompt(query)
+        prompt = build_stage1_prompt(query)
         messages = [{"role": "user", "content": prompt}]
         results = await query_models_parallel(self.council_models, messages)
 

@@ -3,7 +3,7 @@
 from typing import Dict, List, Optional
 
 from backend.governance.base import CouncilResult, GovernanceStructure
-from backend.governance.utils import extract_final_answer, majority_vote
+from backend.governance.utils import build_stage1_prompt, extract_final_answer, majority_vote
 from backend.openrouter import query_model, query_models_parallel
 
 
@@ -45,16 +45,9 @@ class MajorityVoteStructure(GovernanceStructure):
             },
         )
 
-    def _build_prompt_with_instruction(self, query: str) -> str:
-        """Build prompt with FINAL ANSWER instruction."""
-        return f"""{query}
-
-After your reasoning, state your final answer in this exact format:
-FINAL ANSWER: [your answer]"""
-
     async def _stage1_collect_responses(self, query: str) -> Dict[str, str]:
         """Stage 1: Query all council models with FINAL ANSWER instruction."""
-        prompt = self._build_prompt_with_instruction(query)
+        prompt = build_stage1_prompt(query)
         messages = [{"role": "user", "content": prompt}]
         results = await query_models_parallel(self.council_models, messages)
 
@@ -101,7 +94,7 @@ FINAL ANSWER: [your answer]"""
 
     async def _get_chairman_answer(self, query: str) -> str:
         """Get chairman's answer for tiebreaker."""
-        prompt = self._build_prompt_with_instruction(query)
+        prompt = build_stage1_prompt(query)
         messages = [{"role": "user", "content": prompt}]
         result = await query_model(self.chairman_model, messages)
 

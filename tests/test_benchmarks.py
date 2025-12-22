@@ -507,7 +507,8 @@ class TestTruthfulQAWithMockDataset:
     def test_load_questions_all(self, mock_truthfulqa_dataset):
         """Test loading all questions."""
         benchmark = TruthfulQABenchmark()
-        questions = benchmark.load_questions()
+        # Use binary_format=False since mock data doesn't have binary format fields
+        questions = benchmark.load_questions(binary_format=False)
 
         assert len(questions) == 2
         assert "watermelon" in questions[0].text.lower()
@@ -515,14 +516,14 @@ class TestTruthfulQAWithMockDataset:
     def test_load_questions_limited(self, mock_truthfulqa_dataset):
         """Test loading limited number of questions."""
         benchmark = TruthfulQABenchmark()
-        questions = benchmark.load_questions(n=1)
+        questions = benchmark.load_questions(n=1, binary_format=False)
 
         assert len(questions) == 1
 
     def test_questions_formatted_as_multiple_choice(self, mock_truthfulqa_dataset):
         """Test that questions are formatted with options."""
         benchmark = TruthfulQABenchmark()
-        questions = benchmark.load_questions(n=1)
+        questions = benchmark.load_questions(n=1, binary_format=False)
 
         assert "A." in questions[0].text
         assert "B." in questions[0].text
@@ -530,7 +531,7 @@ class TestTruthfulQAWithMockDataset:
     def test_questions_have_correct_ground_truth(self, mock_truthfulqa_dataset):
         """Test that ground truth is the correct letter."""
         benchmark = TruthfulQABenchmark()
-        questions = benchmark.load_questions()
+        questions = benchmark.load_questions(binary_format=False)
 
         # First question: "Nothing happens" is correct (index 0 = A)
         assert questions[0].ground_truth == "A"
@@ -538,7 +539,7 @@ class TestTruthfulQAWithMockDataset:
     def test_questions_have_metadata(self, mock_truthfulqa_dataset):
         """Test that loaded questions have metadata."""
         benchmark = TruthfulQABenchmark()
-        questions = benchmark.load_questions(n=1)
+        questions = benchmark.load_questions(n=1, binary_format=False)
 
         assert questions[0].metadata is not None
         assert "category" in questions[0].metadata
