@@ -2,6 +2,10 @@
 
 An experimental framework comparing different governance structures for LLM councils. Extends [Karpathy's llm-council](https://github.com/karpathy/llm-council) concept with multiple governance implementations and a rigorous evaluation harness.
 
+## Motivation
+
+Karpathy proposed and built an "llm council" to advise a user. This raises an interesting governance question: what is the optimal procedure for this council to adopt? To what extent should the council deliberate and learn from one another, vs. to what extent should the council vote based on each llm's private information? The goal of this research is to start testing different governance structures and see which arrives at superior decisions.
+
 ## Key Finding
 
 **Simple majority voting outperforms more complex deliberation structures** for small LLMs (7-9B parameters).
