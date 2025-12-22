@@ -23,24 +23,40 @@ class TruthfulQABenchmark(Benchmark):
             split: Dataset split to use ("validation" - TruthfulQA only has validation)
         """
         self.split = split
-        self._dataset = None
+        self._dataset_mc = None  # multiple_choice config
+        self._dataset_gen = None  # generation config
 
     @property
     def name(self) -> str:
         return "TruthfulQA"
 
-    def _load_dataset(self):
-        """Lazy load the dataset from HuggingFace."""
-        if self._dataset is None:
-            try:
-                from datasets import load_dataset
+    def _load_dataset(self, config: str = "multiple_choice"):
+        """
+        Lazy load the dataset from HuggingFace.
 
-                self._dataset = load_dataset(
-                    "truthful_qa", "multiple_choice", split=self.split
-                )
-            except Exception as e:
-                raise RuntimeError(f"Failed to load TruthfulQA dataset: {e}")
-        return self._dataset
+        Args:
+            config: Dataset config - "multiple_choice" or "generation"
+        """
+        if config == "generation":
+            if self._dataset_gen is None:
+                try:
+                    from datasets import load_dataset
+                    self._dataset_gen = load_dataset(
+                        "truthful_qa", "generation", split=self.split
+                    )
+                except Exception as e:
+                    raise RuntimeError(f"Failed to load TruthfulQA generation dataset: {e}")
+            return self._dataset_gen
+        else:
+            if self._dataset_mc is None:
+                try:
+                    from datasets import load_dataset
+                    self._dataset_mc = load_dataset(
+                        "truthful_qa", "multiple_choice", split=self.split
+                    )
+                except Exception as e:
+                    raise RuntimeError(f"Failed to load TruthfulQA dataset: {e}")
+            return self._dataset_mc
 
     def load_questions(
         self, n: Optional[int] = None, binary_format: bool = True
@@ -56,7 +72,10 @@ class TruthfulQABenchmark(Benchmark):
         Returns:
             List of Question objects formatted as multiple choice
         """
-        dataset = self._load_dataset()
+        # Binary format uses "generation" config which has best_answer/incorrect_answers
+        # Legacy MC format uses "multiple_choice" config which has mc1_targets
+        config = "generation" if binary_format else "multiple_choice"
+        dataset = self._load_dataset(config)
 
         if n is not None:
             dataset = dataset.select(range(min(n, len(dataset))))
