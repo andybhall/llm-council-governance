@@ -6,7 +6,18 @@ An experimental framework comparing different governance structures for LLM coun
 
 Karpathy proposed and built an "llm council" to advise a user. This raises an interesting governance question: what is the optimal procedure for this council to adopt? To what extent should the council deliberate and learn from one another, vs. to what extent should the council vote based on each llm's private information? The goal of this research is to start testing different governance structures and see which arrives at superior decisions.
 
-## Key Finding
+## Key Findings
+
+### 1. Councils massively outperform individual models
+
+| | Individual Models | Council |
+|---|-------------------|---------|
+| Accuracy | 18-52% | **75-82%** |
+| Improvement | — | **+23 to +30 percentage points** |
+
+All council structures significantly beat the best individual model (p < 0.0001).
+
+### 2. Simple majority voting wins
 
 **Simple majority voting outperforms more complex deliberation structures** for small LLMs (7-9B parameters).
 
@@ -16,6 +27,8 @@ Karpathy proposed and built an "llm council" to advise a user. This raises an in
 | Deliberate → Vote | 79.5% | 30.1s |
 | Deliberate → Synthesize | 78.3% | 21.6s |
 | Rank → Synthesize | 74.6% | 18.5s |
+
+*Based on 960 trials across GSM8K and TruthfulQA benchmarks.*
 
 ### Why?
 
@@ -39,7 +52,27 @@ Meanwhile, majority voting preserves the **independence** that makes "wisdom of 
 
 ### Councils vs Individual Models
 
-The "wisdom of crowds" effect is dramatic. Individual 7-9B models achieve only 18-52% accuracy, but combining them into a council achieves 75-82%:
+The "wisdom of crowds" effect is dramatic. Individual 7-9B models achieve only 18-52% accuracy, but combining them into a council achieves 75-82%.
+
+#### Individual Model Performance (Pilot Study)
+
+| Model | Overall | GSM8K | TruthfulQA |
+|-------|---------|-------|------------|
+| Gemma 2 9B | 51.7% | 22.5% | 80.8% |
+| Llama 3.1 8B | 38.8% | 17.5% | 60.0% |
+| Qwen 2.5 7B | 37.9% | 5.0% | 70.8% |
+| Mistral 7B | 18.3% | 6.7% | 30.0% |
+
+#### Council Performance vs Best Individual Model
+
+All council structures significantly outperform the best individual model (p < 0.0001):
+
+| Structure | Council | Best Individual | Improvement | t-statistic |
+|-----------|---------|-----------------|-------------|-------------|
+| **Majority Vote** | **81.7%** | 51.7% | **+30.0%** | 8.01 |
+| Deliberate → Vote | 79.5% | 51.9% | +27.6% | 6.88 |
+| Deliberate → Synthesize | 78.3% | 51.7% | +26.7% | 6.77 |
+| Rank → Synthesize | 74.6% | 51.7% | +22.9% | 5.71 |
 
 ![Council vs Individual](experiments/results/council_vs_individual.png)
 
@@ -51,6 +84,14 @@ Models change their answers ~21% of the time after deliberation:
 - **Net: +125** (positive but not enough to beat simple voting)
 
 The best individual model (Gemma) abandons correct answers 15% of the time when it sees other models' responses.
+
+#### Groupthink Effect
+
+| Metric | Before Deliberation | After Deliberation | Change |
+|--------|--------------------|--------------------|--------|
+| Agreement rate | 75.9% | 86.7% | +10.9% |
+
+Deliberation increases agreement, but this correlation hurts accuracy when models converge on wrong answers.
 
 ## Setup
 
