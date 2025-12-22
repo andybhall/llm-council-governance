@@ -15,7 +15,7 @@ Karpathy proposed and built an "llm council" to advise a user. This raises an in
 | Accuracy | 18-52% | **75-82%** |
 | Improvement | — | **+23 to +30 percentage points** |
 
-All council structures significantly beat the best individual model (p < 0.0001).
+All council structures significantly beat the best individual model (p < 0.0001). This confirms findings from [Du et al. (2023)](https://arxiv.org/abs/2305.14325), who showed that multi-agent debate among LLM instances improves accuracy on math and factual tasks.
 
 ### 2. Simple majority voting wins
 
