@@ -8,6 +8,7 @@ from backend.governance.utils import (
     majority_vote,
     majority_vote_normalized,
     normalize_answer,
+    smart_majority_vote,
 )
 
 
@@ -223,3 +224,68 @@ class TestUtilsImports:
                 normalize_answer,
             ]
         )
+
+
+class TestSmartMajorityVote:
+    """Tests for smart_majority_vote function."""
+
+    def test_numeric_answers_normalized(self):
+        """Test that numeric answers are compared by value."""
+        # "42" and "42.0" should be treated as the same vote
+        result = smart_majority_vote(["42", "42.0", "43"])
+        assert result in ["42", "42.0"]
+
+    def test_numeric_with_dollar_sign(self):
+        """Test that dollar signs are handled in numeric answers."""
+        result = smart_majority_vote(["$42", "42", "$43"])
+        assert result in ["$42", "42"]
+
+    def test_numeric_with_commas(self):
+        """Test that commas are handled in numeric answers."""
+        result = smart_majority_vote(["1,000", "1000", "2000"])
+        assert result in ["1,000", "1000"]
+
+    def test_letter_answers_case_insensitive(self):
+        """Test that letter answers are compared case-insensitively."""
+        result = smart_majority_vote(["A", "a", "B"])
+        assert result.upper() == "A"
+
+    def test_letter_answers_uppercase_result(self):
+        """Test that letter voting returns uppercase."""
+        result = smart_majority_vote(["a", "a", "b"])
+        assert result == "A"
+
+    def test_string_answers_normalized(self):
+        """Test that string answers are compared with normalization."""
+        result = smart_majority_vote(["Yes", "YES", "no"])
+        assert result.lower() == "yes"
+
+    def test_empty_list(self):
+        """Test with empty list."""
+        assert smart_majority_vote([]) == ""
+
+    def test_single_answer(self):
+        """Test with single answer."""
+        assert smart_majority_vote(["42"]) == "42"
+
+    def test_tiebreaker_numeric(self):
+        """Test tiebreaker with numeric answers."""
+        result = smart_majority_vote(["42", "43"], tiebreaker="43")
+        assert result == "43"
+
+    def test_tiebreaker_letter(self):
+        """Test tiebreaker with letter answers."""
+        result = smart_majority_vote(["A", "B"], tiebreaker="B")
+        assert result == "B"
+
+    def test_tiebreaker_string(self):
+        """Test tiebreaker with string answers."""
+        result = smart_majority_vote(["yes", "no"], tiebreaker="no")
+        assert result.lower() == "no"
+
+    def test_mixed_numeric_and_text_falls_back(self):
+        """Test that mixed types fall back to string comparison."""
+        # "42" parses as numeric, but "forty-two" doesn't
+        result = smart_majority_vote(["42", "42", "forty-two"])
+        # Should fall back to normalized string matching
+        assert result == "42"

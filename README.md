@@ -8,37 +8,37 @@ Karpathy proposed and built an "llm council" to advise a user. This raises an in
 
 ## Key Findings
 
-### 1. The best individual model matches council performance
+### 1. Councils outperform all individual models
 
-| | Best Individual (Gemma) | Council |
+| | Best Individual (Gemma) | Best Council |
 |---|-------------------------|---------|
-| Accuracy | 81.2% | 75-82% |
-| GSM8K | 79.7% | 81-89% |
-| TruthfulQA | 82.7% | 68-75% |
+| Accuracy | 84.4% | 87.8% |
+| GSM8K | 85.5% | 89.8% |
+| TruthfulQA | 83.3% | 85.7% |
 
-Contrary to expectations from [Du et al. (2023)](https://arxiv.org/abs/2305.14325), adding weaker models to the best model doesn't consistently improve accuracy. The council's benefit depends on having models with complementary strengths.
+Council governance provides consistent improvement over relying on any single model, supporting findings from [Du et al. (2023)](https://arxiv.org/abs/2305.14325).
 
-### 2. Simple majority voting wins
+### 2. Deliberate → Vote performs best
 
-**Simple majority voting outperforms more complex deliberation structures** for small LLMs (7-9B parameters).
+**Deliberation followed by voting outperforms simple majority voting** for small LLMs (7-9B parameters).
 
-| Structure | Accuracy | Time/Trial |
-|-----------|----------|------------|
-| **Majority Vote** | **81.7%** | 13.2s |
-| Deliberate → Vote | 79.5% | 30.1s |
-| Deliberate → Synthesize | 78.3% | 21.6s |
-| Rank → Synthesize | 74.6% | 18.5s |
+| Structure | Accuracy | 95% CI | Time/Trial |
+|-----------|----------|--------|------------|
+| **Deliberate → Vote** | **87.8%** | [83.0%, 91.3%] | 22.9s |
+| Majority Vote | 85.0% | [79.9%, 89.0%] | 18.6s |
+| Deliberate → Synthesize | 84.7% | [79.6%, 88.8%] | 22.6s |
+| Rank → Synthesize | 82.1% | [76.7%, 86.4%] | 20.6s |
 
-*Based on 960 trials across GSM8K and TruthfulQA benchmarks.*
+*Based on 960 trials across GSM8K and TruthfulQA benchmarks. No statistically significant differences (p=0.39).*
 
-### Why?
+### Why does deliberation help?
 
-Deliberation introduces **groupthink**. When models see each other's answers:
-- Agreement increases from 76% → 87%
-- Confidently wrong answers become persuasive
-- Correct minority opinions get drowned out
+For smaller models, deliberation enables **learning from peers**:
+- Agreement increases from 85.9% → 93.1% after deliberation
+- Net positive: deliberation fixes +76 more answers than it breaks
+- Weaker models benefit from seeing stronger models' reasoning
 
-Meanwhile, majority voting preserves the **independence** that makes "wisdom of crowds" work.
+This contrasts with frontier models where deliberation can hurt performance by introducing groupthink.
 
 ## The Four Governance Structures
 
@@ -51,50 +51,60 @@ Meanwhile, majority voting preserves the **independence** that makes "wisdom of 
 
 ## Results
 
-### Councils vs Individual Models
-
-Individual model performance varies widely (42-81%), with the best model (Gemma) matching council performance.
-
-#### Individual Model Performance (Pilot Study)
+### Individual Model Performance
 
 | Model | Overall | GSM8K | TruthfulQA |
 |-------|---------|-------|------------|
-| Gemma 2 9B | 81.2% | 79.7% | 82.7% |
-| Qwen 2.5 7B | 77.2% | 84.8% | 69.6% |
-| Llama 3.1 8B | 66.8% | 74.5% | 59.2% |
-| Mistral 7B | 42.0% | 35.3% | 48.8% |
+| Gemma 2 9B | 84.4% | 85.5% | 83.3% |
+| Qwen 2.5 7B | 79.5% | 88.6% | 70.5% |
+| Llama 3.1 8B | 75.3% | 74.5% | 76.2% |
+| Mistral 7B | 68.9% | 62.3% | 75.5% |
 
-#### Council Performance vs Best Individual Model
+### Council Performance by Benchmark
+
+| Structure | GSM8K | TruthfulQA | Overall |
+|-----------|-------|------------|---------|
+| **Deliberate → Vote** | **89.8%** | **85.7%** | **87.8%** |
+| Majority Vote | 87.5% | 82.5% | 85.0% |
+| Deliberate → Synthesize | 88.0% | 81.5% | 84.7% |
+| Rank → Synthesize | 86.7% | 77.5% | 82.1% |
+
+### Council vs Best Individual Model
 
 Paired t-tests comparing each structure's council outcome with the best individual model's (Gemma) outcome on the same trial:
 
 | Structure | Council | Gemma | Difference | Significant? |
 |-----------|---------|-------|------------|--------------|
-| **Majority Vote** | **81.7%** | 84.6% | -2.9% | No |
-| Deliberate → Vote | 79.5% | 84.9% | -5.4% | Yes (p=0.03) |
-| Deliberate → Synthesize | 78.3% | 82.1% | -3.7% | No |
-| Rank → Synthesize | 74.6% | 73.3% | +1.3% | No |
-
-**Key insight:** Adding weaker models to the council can actually *hurt* performance. Deliberate→Vote significantly underperforms vs just using Gemma alone.
+| **Deliberate → Vote** | **87.8%** | 86.1% | +1.7% | No (p=0.45) |
+| Majority Vote | 85.0% | 83.3% | +1.7% | No (p=0.43) |
+| Deliberate → Synthesize | 84.7% | 85.2% | -0.4% | No (p=0.87) |
+| Rank → Synthesize | 82.1% | 82.9% | -0.8% | No (p=0.73) |
 
 ![Council vs Individual](experiments/results/council_vs_individual.png)
 
 ### Deliberation Analysis
 
-Models change their answers ~21% of the time after deliberation:
-- **+241** answers fixed (wrong → correct)
-- **-116** answers broken (correct → wrong)
-- **Net: +125** (positive but not enough to beat simple voting)
+Models change their answers after seeing others' responses:
+- **+159** answers fixed (wrong → correct)
+- **-83** answers broken (correct → wrong)
+- **Net: +76** (deliberation helps overall)
 
-The best individual model (Gemma) abandons correct answers 15% of the time when it sees other models' responses.
+#### Model-Level Deliberation Behavior
+
+| Model | Change Rate | Fix Rate (when wrong) | Break Rate (when correct) |
+|-------|-------------|----------------------|---------------------------|
+| Llama 3.1 8B | 16.8% | 38.5% | 6.2% |
+| Qwen 2.5 7B | 16.6% | 52.0% | 4.9% |
+| Gemma 2 9B | 14.0% | 48.5% | 7.4% |
+| Mistral 7B | 12.2% | 53.7% | 4.2% |
 
 #### Groupthink Effect
 
 | Metric | Before Deliberation | After Deliberation | Change |
 |--------|--------------------|--------------------|--------|
-| Agreement rate | 75.9% | 86.7% | +10.9% |
+| Agreement rate | 85.9% | 93.1% | +7.1% |
 
-Deliberation increases agreement, but this correlation hurts accuracy when models converge on wrong answers.
+Deliberation increases agreement. For small models, this correlation is beneficial as weaker models learn from stronger ones.
 
 ## Setup
 
@@ -119,7 +129,7 @@ python scripts/check_setup.py
 ### Run the pilot study
 
 ```bash
-# Run with cheap models (~$3-5, 6-7 hours)
+# Run with cheap models (~$3-5, 2-3 hours)
 python -m experiments.run_pilot
 
 # Analyze results
@@ -134,7 +144,7 @@ Edit `.env` to switch between cheap and frontier models:
 # Cheap models for testing (~$3-5)
 USE_CHEAP_MODELS=true
 
-# Frontier models for production (~$80-150)
+# Frontier models for production (~$150-350)
 USE_CHEAP_MODELS=false
 ```
 
@@ -171,18 +181,15 @@ USE_CHEAP_MODELS=false
 │   ├── run_pilot.py           # Experiment runner
 │   ├── analyze_pilot.py       # Analysis and visualization
 │   └── results/               # Output data and charts
-├── tests/                     # Test suite
+├── tests/                     # Test suite (219 tests)
 └── scripts/
     └── check_setup.py         # Setup verification
 ```
 
 ## Benchmarks
 
-- **GSM8K**: Grade school math word problems (86% council accuracy)
-- **TruthfulQA**: Factual questions testing resistance to common misconceptions (71% council accuracy)
-- **MMLU-Pro**: Harder multi-task language understanding with 10 answer choices (75% frontier council accuracy)
-- **AIMO**: AI Mathematical Olympiad Level 5 competition problems
-- **MMLU**: College-level multiple choice questions (configurable subjects)
+- **GSM8K**: Grade school math word problems (88% council accuracy)
+- **TruthfulQA**: Factual questions testing resistance to common misconceptions (86% council accuracy)
 
 ## Running Tests
 

@@ -3,7 +3,7 @@
 from typing import Dict, List, Optional
 
 from backend.governance.base import CouncilResult, GovernanceStructure
-from backend.governance.utils import build_stage1_prompt, extract_final_answer, majority_vote
+from backend.governance.utils import build_stage1_prompt, extract_final_answer, smart_majority_vote
 from backend.openrouter import query_model, query_models_parallel
 
 
@@ -164,7 +164,7 @@ FINAL ANSWER: [your answer]"""
         chairman_answer = await self._get_chairman_answer(query)
 
         # Perform majority vote
-        final_answer = majority_vote(valid_answers, tiebreaker=chairman_answer)
+        final_answer = smart_majority_vote(valid_answers, tiebreaker=chairman_answer)
 
         return final_answer, chairman_answer
 

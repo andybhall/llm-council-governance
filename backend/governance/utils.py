@@ -297,3 +297,39 @@ def majority_vote_letter(
             winners = [tb_letter]
 
     return winners[0]
+
+
+def smart_majority_vote(
+    answers: List[str], tiebreaker: Optional[str] = None
+) -> str:
+    """
+    Smart majority vote that auto-detects answer type.
+
+    - If all answers parse as numbers → numeric voting
+    - If all answers are single letters → letter voting
+    - Otherwise → normalized string voting
+
+    Args:
+        answers: List of answer strings
+        tiebreaker: Optional tiebreaker answer
+
+    Returns:
+        Winning answer string
+    """
+    if not answers:
+        return ""
+
+    # Try numeric voting first
+    if all(normalize_numeric_answer(a) is not None for a in answers):
+        result = majority_vote_numeric(answers, tiebreaker)
+        if result:
+            return result
+
+    # Try letter voting
+    if all(normalize_letter_answer(a) is not None for a in answers):
+        result = majority_vote_letter(answers, tiebreaker)
+        if result:
+            return result
+
+    # Fall back to normalized string voting
+    return majority_vote_normalized(answers, tiebreaker)
