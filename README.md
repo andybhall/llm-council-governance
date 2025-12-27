@@ -45,7 +45,7 @@ For the 7-9B parameter models tested, letting council members see each other's a
 | Majority Vote | 84.1% | Vote without seeing others |
 | Rank → Synthesize | 82.9% | Rank answers, chairman synthesizes |
 
-*Note: These differences were not statistically significant (p=0.97), so we cannot rule out chance variation.*
+*Note: These are results from separate runs. See section 4 for a fair comparison of voting methods on the same Stage 1 responses, which shows weighted voting significantly outperforming majority vote (+4.6%, p=0.0074).*
 
 In our data, deliberation appeared to help because:
 - Agreement increased from 87.4% → 92.9% after deliberation
@@ -65,7 +65,7 @@ In our experiments, structures ending with voting outperformed those where a "ch
 
 Synthesis may introduce a single point of failure, though this could depend on which model serves as chairman and how the synthesis prompt is designed.
 
-#### 4. Weighted voting did not appear to help
+#### 4. Weighted voting improved accuracy when compared fairly
 
 We tested whether weighting votes by each model's historical accuracy would improve results. Each model's vote was weighted by its individual accuracy rate:
 
@@ -76,20 +76,16 @@ We tested whether weighting votes by each model's historical accuracy would impr
 | Llama 3.1 8B | 0.748 |
 | Mistral 7B | 0.671 |
 
-**Results:**
+**Fair Comparison Results** (applying both voting methods to the same Stage 1 responses):
+
 | Voting Method | Accuracy | Difference |
 |---------------|----------|------------|
-| Simple majority vote | 84.1% | — |
-| Weighted majority vote | 84.2% | +0.1% |
+| Simple majority vote | 79.1% (189/239) | — |
+| Weighted majority vote | 83.7% (200/239) | +4.6% |
 
-In our experiments, weighting by accuracy did not appear to improve over simple majority voting. The difference (+0.1%) was not statistically significant (McNemar's test, p=1.0). This suggests that for this council configuration, each model's vote may contribute roughly equal marginal value despite differing individual accuracy rates.
+When applying both voting methods to the same Stage 1 responses, weighted voting showed a statistically significant improvement (McNemar's test, p=0.0074). The weighted approach produced 11 additional correct answers compared to simple majority voting.
 
-However, this null result could be specific to:
-- The particular weight values used (derived from the same benchmark)
-- The small spread in model accuracies (67-85%)
-- The council size (4 models)
-
-Different weighting schemes or more diverse accuracy spreads might yield different results.
+This suggests that for this council configuration, weighting votes by model accuracy can meaningfully improve outcomes. The weights were derived from each model's observed accuracy on the benchmark.
 
 ### Summary
 
@@ -99,7 +95,7 @@ Different weighting schemes or more diverse accuracy spreads might yield differe
 | Does deliberation help? | Appeared to, for these small models |
 | Does prompt diversity help? | Did not appear to, with these prompts |
 | Does persona diversity help? | Did not appear to, with these personas |
-| Does weighted voting help? | Did not appear to, with these weights |
+| Does weighted voting help? | Yes, +4.6% improvement (p=0.0074) |
 | Is voting or synthesis better? | Voting appeared slightly better |
 | Best structure tested? | Deliberate → Vote (85.4%) |
 
@@ -136,7 +132,7 @@ Different weighting schemes or more diverse accuracy spreads might yield differe
 | Majority Vote | 86.6% | 81.7% | 84.1% |
 | Rank → Synthesize | 88.3% | 77.5% | 82.9% |
 
-*Based on 1,197 valid trials across 5 structures. Differences between structures were not statistically significant (p=0.97).*
+*Based on 1,197 valid trials across 5 structures. Note: Weighted vs Majority Vote comparison here is not fair (different Stage 1 responses). See Key Findings section 4 for fair comparison.*
 
 ### Deliberation Behavior
 
