@@ -1,0 +1,47 @@
+======================================================================
+PERSONA VARIANT COUNCIL EXPERIMENT - ANALYSIS REPORT
+======================================================================
+
+EXPERIMENT CONFIGURATION
+----------------------------------------
+Base model: google/gemma-2-9b-it
+Personas: 4
+  1. persona/mathematician
+  2. persona/scientist
+  3. persona/engineer
+  4. persona/teacher
+
+BASELINES
+----------------------------------------
+Single model (google/gemma-2-9b-it): 84.5%
+Prompt variant council: 84.1%
+
+PERSONA COUNCIL RESULTS
+----------------------------------------
+Total trials: 945
+Overall accuracy: 83.0%
+
+Accuracy by Structure:
+  Independent → Majority Vote: 85.7% (203/237)
+  Independent → Deliberate → Vote: 85.2% (201/236)
+  Independent → Rank → Synthesize: 84.0% (199/237)
+  Independent → Deliberate → Synthesize: 77.0% (181/235)
+
+Accuracy by Benchmark:
+  GSM8K: 85.2% (408/479)
+  TruthfulQA: 80.7% (376/466)
+
+COMPARISON
+----------------------------------------
+Single model baseline: 84.5%
+Persona council:       83.0% (-1.5%)
+Prompt variant council: 84.1%
+Persona council:        83.0% (-1.1%)
+
+FINDING: Persona diversity has MINIMAL effect
+         Personas perform SIMILARLY to prompt variants
+
+Best structure: Independent → Majority Vote
+  Accuracy: 85.7% (+1.2% vs baseline)
+
+======================================================================

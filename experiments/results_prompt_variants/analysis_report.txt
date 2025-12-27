@@ -1,0 +1,47 @@
+======================================================================
+PROMPT VARIANT COUNCIL EXPERIMENT - ANALYSIS REPORT
+======================================================================
+
+EXPERIMENT CONFIGURATION
+----------------------------------------
+Base model: google/gemma-2-9b-it
+Prompt variants: 4
+  1. prompt-variant/step-by-step
+  2. prompt-variant/identify-then-solve
+  3. prompt-variant/skeptical-verifier
+  4. prompt-variant/example-based
+
+BASELINE: SINGLE MODEL ACCURACY (from pilot)
+----------------------------------------
+Model: google/gemma-2-9b-it
+Overall: 84.5% (1197 trials)
+  GSM8K: 85.6%
+  TruthfulQA: 83.3%
+
+PROMPT COUNCIL RESULTS
+----------------------------------------
+Total trials: 950
+Overall accuracy: 84.1%
+
+Accuracy by Structure:
+  Independent → Rank → Synthesize: 86.2% (207/240)
+  Independent → Deliberate → Vote: 86.1% (204/237)
+  Independent → Majority Vote: 85.4% (204/239)
+  Independent → Deliberate → Synthesize: 78.6% (184/234)
+
+Accuracy by Benchmark:
+  GSM8K: 87.3% (411/471)
+  TruthfulQA: 81.0% (388/479)
+
+COMPARISON: COUNCIL vs SINGLE MODEL
+----------------------------------------
+Single model baseline: 84.5%
+Prompt variant council: 84.1%
+Difference: -0.4%
+
+FINDING: Prompt diversity has MINIMAL effect
+
+Best structure: Independent → Rank → Synthesize
+  Accuracy: 86.2% (+1.8% vs baseline)
+
+======================================================================

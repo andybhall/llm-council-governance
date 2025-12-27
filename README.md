@@ -106,6 +106,43 @@ Models change their answers after seeing others' responses:
 
 Deliberation increases agreement. For small models, this correlation is beneficial as weaker models learn from stronger ones.
 
+### 3. Prompt/persona diversity ≠ Model diversity
+
+We tested whether using a single model (Gemma 2 9B) with different prompts could replicate the benefits of a multi-model council. Two approaches were tested:
+
+1. **Prompt variants**: 4 reasoning-style prompts (step-by-step, identify-then-solve, skeptical verifier, example-based)
+2. **Persona variants**: 4 opinionated character personas (rigorous mathematician, skeptical scientist, practical engineer, enthusiastic teacher)
+
+| Approach | Accuracy | vs Baseline |
+|----------|----------|-------------|
+| Single model (baseline) | 84.5% | — |
+| Prompt variant council | 84.1% | -0.4% |
+| Persona variant council | 83.0% | -1.5% |
+| Multi-model council | 87.8% | +3.3% |
+
+**Finding: Neither prompt nor persona diversity provides benefit.** Using the same model with different instructions performs no better than a single model call.
+
+#### Persona Variant Results by Structure
+
+| Structure | Accuracy | vs Single Model |
+|-----------|----------|-----------------|
+| Majority Vote | 85.7% | +1.2% |
+| Deliberate → Vote | 85.2% | +0.7% |
+| Rank → Synthesize | 84.0% | -0.5% |
+| Deliberate → Synthesize | 77.0% | -7.5% |
+
+The value of multi-model councils comes from genuine differences in model training and architecture, not from varying prompt instructions or personas.
+
+```bash
+# Run prompt variant experiment
+python -m experiments.run_prompt_experiment
+python -m experiments.analyze_prompt_experiment
+
+# Run persona variant experiment
+python -m experiments.run_persona_experiment
+python -m experiments.analyze_persona_experiment
+```
+
 ## Setup
 
 ```bash
@@ -173,6 +210,8 @@ USE_CHEAP_MODELS=false
 │   │   ├── structure_b.py     # Majority Vote
 │   │   ├── structure_c.py     # Deliberate → Vote
 │   │   └── structure_d.py     # Deliberate → Synthesize
+│   ├── prompt_variants.py     # Prompt diversity experiment
+│   ├── persona_variants.py    # Persona diversity experiment
 │   └── evaluation/
 │       ├── base.py            # Benchmark ABC
 │       ├── gsm8k.py           # Math reasoning benchmark
@@ -181,7 +220,7 @@ USE_CHEAP_MODELS=false
 │   ├── run_pilot.py           # Experiment runner
 │   ├── analyze_pilot.py       # Analysis and visualization
 │   └── results/               # Output data and charts
-├── tests/                     # Test suite (219 tests)
+├── tests/                     # Test suite (405 tests)
 └── scripts/
     └── check_setup.py         # Setup verification
 ```
