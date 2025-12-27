@@ -8,74 +8,76 @@ Karpathy proposed and built an "llm council" to advise a user. This raises an in
 
 ## Key Findings
 
-We ran 2,880 trials across three experiments to answer: **What makes LLM councils effective?**
+We ran 2,880 trials across three experiments to explore what factors appear to influence LLM council effectiveness. These findings are specific to our experimental setup: 7-9B parameter models, GSM8K and TruthfulQA benchmarks, and the particular prompts and structures tested.
 
-### The Big Picture
+### Overview
 
 | Configuration | Accuracy | vs Single Model |
 |---------------|----------|-----------------|
 | Single model (Gemma 2 9B) | 84.5% | — |
 | Same model + prompt diversity | 84.1% | -0.4% |
 | Same model + persona diversity | 83.0% | -1.5% |
-| **Multi-model council** | **87.8%** | **+3.3%** |
+| Multi-model council | 87.8% | +3.3% |
 
-**Bottom line:** Council benefits come from genuine model diversity (different architectures and training), not from prompt engineering or persona simulation.
+In this experiment, council benefits appeared to come from using different models rather than from prompt engineering or persona simulation. However, these results may not generalize to other models, benchmarks, or prompt designs.
 
-### Three Core Insights
+### Three Observations
 
-#### 1. Real diversity matters, artificial diversity doesn't
+#### 1. Model diversity appeared more effective than prompt diversity
 
-We tested whether a single model (Gemma 2 9B) with 4 different prompts could match a true multi-model council:
+We tested whether a single model (Gemma 2 9B) with 4 different prompts could match a true multi-model council. In our experiments:
 
-- **Prompt variants** (step-by-step, skeptical verifier, etc.): 84.1% — no improvement
-- **Persona variants** (mathematician, scientist, engineer, teacher): 83.0% — no improvement
-- **Different models** (Gemma, Qwen, Llama, Mistral): 87.8% — significant improvement
+- **Prompt variants**: 84.1% — no apparent improvement over baseline
+- **Persona variants**: 83.0% — no apparent improvement over baseline
+- **Different models**: 87.8% — appeared to improve over baseline
 
-The value of councils comes from models that were trained differently, not from prompting the same model to "think differently."
+This suggests that, at least for these particular prompts and benchmarks, the value may come from models trained on different data rather than from prompting the same model differently. Other prompt designs might yield different results.
 
-#### 2. Deliberation helps small models learn from peers
+#### 2. Deliberation appeared to help small models
 
-For 7-9B parameter models, letting council members see each other's answers before voting improves accuracy:
+For the 7-9B parameter models tested, letting council members see each other's answers before voting appeared to improve accuracy:
 
 | Structure | Accuracy | Description |
 |-----------|----------|-------------|
-| **Deliberate → Vote** | **87.8%** | See others' answers, then vote |
+| Deliberate → Vote | 87.8% | See others' answers, then vote |
 | Majority Vote | 85.0% | Vote without seeing others |
 | Deliberate → Synthesize | 84.7% | See others, chairman synthesizes |
 | Rank → Synthesize | 82.1% | Rank answers, chairman synthesizes |
 
-Why it works:
-- Weaker models learn from stronger models' reasoning
-- Agreement increases from 85.9% → 93.1% after deliberation
+*Note: These differences were not statistically significant (p=0.39), so we cannot rule out chance variation.*
+
+In our data, deliberation appeared to help because:
+- Agreement increased from 85.9% → 93.1% after deliberation
 - Net effect: +76 more answers fixed than broken
+- Weaker models may have benefited from seeing stronger models' reasoning
 
-This contrasts with frontier models, where deliberation can introduce groupthink that hurts performance.
+This pattern might differ for frontier models, where deliberation could potentially introduce groupthink.
 
-#### 3. Voting beats synthesis
+#### 3. Voting appeared more reliable than synthesis
 
-Structures that end with voting outperform those where a "chairman" synthesizes the final answer:
+In our experiments, structures ending with voting outperformed those where a "chairman" synthesized the final answer:
 
 | Final Stage | Best Accuracy |
 |-------------|---------------|
 | Majority vote | 87.8% |
 | Chairman synthesis | 84.7% |
 
-Synthesis introduces a single point of failure. Voting aggregates the wisdom of the council more reliably.
+Synthesis may introduce a single point of failure, though this could depend on which model serves as chairman and how the synthesis prompt is designed.
 
-### Summary Table
+### Summary
 
-| Question | Answer |
-|----------|--------|
-| Do councils beat single models? | Yes, +3.3% accuracy |
-| Does deliberation help? | Yes, for small models |
-| Does prompt diversity help? | No |
-| Does persona diversity help? | No |
-| Is voting or synthesis better? | Voting |
-| Best structure overall? | Deliberate → Vote (87.8%) |
+| Question | Observation (in this experiment) |
+|----------|----------------------------------|
+| Do councils beat single models? | Appeared to, by +3.3% |
+| Does deliberation help? | Appeared to, for these small models |
+| Does prompt diversity help? | Did not appear to, with these prompts |
+| Does persona diversity help? | Did not appear to, with these personas |
+| Is voting or synthesis better? | Voting appeared better |
+| Best structure tested? | Deliberate → Vote (87.8%) |
 
 ---
 
-## Detailed Results
+## Experimental Details
 
 ### The Four Governance Structures
 
@@ -86,7 +88,7 @@ Synthesis introduces a single point of failure. Voting aggregates the wisdom of 
 | **C: Deliberate→Vote** | 4 models answer independently | Each model sees others' answers, can revise | Take majority vote |
 | **D: Deliberate→Synthesize** | 4 models answer independently | Each model sees others' answers, can revise | Chairman synthesizes |
 
-### Individual Model Performance
+### Models Tested
 
 | Model | Overall | GSM8K | TruthfulQA |
 |-------|---------|-------|------------|
@@ -99,22 +101,22 @@ Synthesis introduces a single point of failure. Voting aggregates the wisdom of 
 
 | Structure | GSM8K | TruthfulQA | Overall |
 |-----------|-------|------------|---------|
-| **Deliberate → Vote** | **89.8%** | **85.7%** | **87.8%** |
+| Deliberate → Vote | 89.8% | 85.7% | 87.8% |
 | Majority Vote | 87.5% | 82.5% | 85.0% |
 | Deliberate → Synthesize | 88.0% | 81.5% | 84.7% |
 | Rank → Synthesize | 86.7% | 77.5% | 82.1% |
 
-*Based on 960 trials. No statistically significant differences between structures (p=0.39).*
+*Based on 960 trials. Differences between structures were not statistically significant (p=0.39).*
 
 ### Deliberation Behavior
 
-Models change their answers after seeing others' responses:
+Models changed their answers after seeing others' responses:
 
 | Metric | Value |
 |--------|-------|
 | Answers fixed (wrong → correct) | +159 |
 | Answers broken (correct → wrong) | -83 |
-| **Net improvement** | **+76** |
+| Net change | +76 |
 
 | Model | Change Rate | Fix Rate | Break Rate |
 |-------|-------------|----------|------------|
@@ -123,11 +125,29 @@ Models change their answers after seeing others' responses:
 | Gemma 2 9B | 14.0% | 48.5% | 7.4% |
 | Mistral 7B | 12.2% | 53.7% | 4.2% |
 
-### Prompt & Persona Experiments
+---
 
-Tested whether artificial diversity could substitute for model diversity:
+## Prompt & Persona Experiments
 
-**Prompt Variants** (4 reasoning styles with Gemma 2 9B):
+We tested whether artificial diversity could substitute for model diversity by using the same model (Gemma 2 9B) with different instructions.
+
+### Prompt Variants Tested
+
+Four reasoning-style prompts were prepended to each question:
+
+**1. Step-by-Step**
+> Think through this step by step. Break down the problem into smaller parts and solve each one carefully before moving to the next.
+
+**2. Identify-then-Solve**
+> First, identify the key information and constraints in this problem. List them explicitly. Then, use that information to systematically solve the problem.
+
+**3. Skeptical Verifier**
+> Consider common mistakes people make with problems like this. As you solve it, verify each step of your reasoning and check for errors before proceeding.
+
+**4. Example-Based**
+> Think of similar problems you've seen before. What patterns or approaches worked for those? Apply those insights to solve this problem.
+
+**Results by Structure:**
 | Structure | Accuracy | vs Baseline |
 |-----------|----------|-------------|
 | Rank → Synthesize | 86.2% | +1.8% |
@@ -136,7 +156,23 @@ Tested whether artificial diversity could substitute for model diversity:
 | Deliberate → Synthesize | 78.6% | -5.9% |
 | **Overall** | **84.1%** | **-0.4%** |
 
-**Persona Variants** (4 character personas with Gemma 2 9B):
+### Persona Variants Tested
+
+Four character personas were prepended to each question:
+
+**1. The Rigorous Mathematician**
+> You are a rigorous mathematician who demands formal precision. You find sloppy reasoning physically painful. Every claim must be justified, every step must follow logically from the previous one. You don't trust intuition—you trust proof. If something seems obvious, that's exactly when you should verify it carefully.
+
+**2. The Skeptical Scientist**
+> You are a skeptical scientist who questions everything. Your first instinct is to ask "Is this actually true?" You've seen too many confident wrong answers to trust anything at face value. You look for hidden assumptions, check edge cases, and actively try to find flaws in reasoning—including your own.
+
+**3. The Practical Engineer**
+> You are a practical engineer who cares about real-world correctness. Before accepting any answer, you ask: "Does this make sense?" You use estimation and sanity checks. If a math problem gives you a negative number of apples or a person's age of 500 years, something went wrong. You trust your intuition about what's reasonable.
+
+**4. The Enthusiastic Teacher**
+> You are an enthusiastic teacher who loves making things crystal clear. You believe any problem can be solved if you break it down carefully enough. You explain your reasoning as if teaching a student, making each step explicit. You use concrete examples when helpful and always double-check your work before giving a final answer.
+
+**Results by Structure:**
 | Structure | Accuracy | vs Baseline |
 |-----------|----------|-------------|
 | Majority Vote | 85.7% | +1.2% |
@@ -144,6 +180,10 @@ Tested whether artificial diversity could substitute for model diversity:
 | Rank → Synthesize | 84.0% | -0.5% |
 | Deliberate → Synthesize | 77.0% | -7.5% |
 | **Overall** | **83.0%** | **-1.5%** |
+
+### Interpretation
+
+Neither prompt nor persona diversity appeared to improve over the single-model baseline in our experiments. However, this does not rule out the possibility that other prompt designs, more distinctive personas, or different base models might yield different results. The prompts and personas tested here represent only a small sample of possible approaches.
 
 ---
 
@@ -233,14 +273,22 @@ USE_CHEAP_MODELS=false
 
 ## Benchmarks
 
-- **GSM8K**: Grade school math word problems (89.8% best council accuracy)
-- **TruthfulQA**: Factual questions testing resistance to common misconceptions (85.7% best council accuracy)
+- **GSM8K**: Grade school math word problems
+- **TruthfulQA**: Factual questions testing resistance to common misconceptions
 
 ## Running Tests
 
 ```bash
 pytest tests/ -v
 ```
+
+## Limitations
+
+- Results are specific to the 7-9B parameter models tested
+- Only two benchmarks were used (GSM8K, TruthfulQA)
+- Prompt and persona designs represent a small sample of possible approaches
+- Statistical significance was not achieved for structure comparisons
+- Results may not generalize to frontier models or other domains
 
 ## License
 
@@ -251,4 +299,4 @@ MIT
 - Inspired by [Andrej Karpathy's llm-council](https://github.com/karpathy/llm-council)
 - Uses [OpenRouter](https://openrouter.ai/) for multi-model API access
 - Benchmarks from [GSM8K](https://github.com/openai/grade-school-math) and [TruthfulQA](https://github.com/sylinrl/TruthfulQA)
-- Supports findings from [Du et al. (2023)](https://arxiv.org/abs/2305.14325) on multi-agent debate
+- Related work: [Du et al. (2023)](https://arxiv.org/abs/2305.14325) on multi-agent debate
