@@ -1,0 +1,6 @@
+{
+  "google/gemma-2-9b-it": 0.8446115288220551,
+  "qwen/qwen-2.5-7b-instruct": 0.8170426065162907,
+  "meta-llama/llama-3.1-8b-instruct": 0.747702589807853,
+  "mistralai/mistral-7b-instruct": 0.670843776106934
+}

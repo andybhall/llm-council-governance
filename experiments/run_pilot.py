@@ -99,6 +99,7 @@ async def run_single_trial(
         "is_correct": eval_result.is_correct,
         "predicted": eval_result.predicted,
         "expected": eval_result.expected,
+        "question_text": question.text,
         "final_answer": council_result.final_answer,
         "elapsed_time": elapsed_time,
         "stage1_responses": council_result.stage1_responses,
@@ -246,13 +247,14 @@ async def run_pilot(
     Returns:
         DataFrame with all experiment results
     """
-    from backend.config import CHAIRMAN_MODEL, COUNCIL_MODELS
+    from backend.config import CHAIRMAN_MODEL, COUNCIL_MODELS, WEIGHTS_FILE
     from backend.evaluation import GSM8KBenchmark, TruthfulQABenchmark
     from backend.governance import (
         DeliberateSynthesizeStructure,
         DeliberateVoteStructure,
         IndependentRankSynthesize,
         MajorityVoteStructure,
+        WeightedMajorityVote,
     )
 
     # Initialize governance structures
@@ -261,6 +263,7 @@ async def run_pilot(
         MajorityVoteStructure(COUNCIL_MODELS, CHAIRMAN_MODEL),
         DeliberateVoteStructure(COUNCIL_MODELS, CHAIRMAN_MODEL),
         DeliberateSynthesizeStructure(COUNCIL_MODELS, CHAIRMAN_MODEL),
+        WeightedMajorityVote(COUNCIL_MODELS, CHAIRMAN_MODEL, weights_file=WEIGHTS_FILE),
     ]
 
     # Initialize benchmarks

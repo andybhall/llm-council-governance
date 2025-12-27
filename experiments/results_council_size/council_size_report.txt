@@ -1,0 +1,66 @@
+============================================================
+COUNCIL SIZE EXPERIMENT - ANALYSIS REPORT
+============================================================
+
+OVERVIEW
+----------------------------------------
+Total trials: 1200
+Council sizes tested: [np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6)]
+Benchmarks: ['GSM8K', 'TruthfulQA']
+Valid trials: 1199
+Overall accuracy: 84.4%
+
+ACCURACY BY COUNCIL SIZE
+----------------------------------------
+  Size 2: 80.0% (192/240)
+  Size 3: 85.0% (204/240)
+  Size 4: 85.4% (205/240)
+  Size 5: 86.2% (207/240)
+  Size 6: 85.4% (204/239)
+
+ACCURACY WITH 95% CONFIDENCE INTERVALS
+----------------------------------------
+  Size 2: 80.0% [74.5%, 84.6%]
+  Size 3: 85.0% [79.9%, 89.0%]
+  Size 4: 85.4% [80.4%, 89.3%]
+  Size 5: 86.2% [81.3%, 90.0%]
+  Size 6: 85.4% [80.3%, 89.3%]
+
+ACCURACY BY SIZE AND BENCHMARK
+----------------------------------------
+  GSM8K:
+    Size 2: 75.0%
+    Size 3: 85.0%
+    Size 4: 89.2%
+    Size 5: 89.2%
+    Size 6: 90.8%
+  TruthfulQA:
+    Size 2: 85.0%
+    Size 3: 85.0%
+    Size 4: 81.7%
+    Size 5: 83.3%
+    Size 6: 80.0%
+
+OPTIMAL COUNCIL SIZE ANALYSIS
+----------------------------------------
+  Optimal size: 5
+  Peak accuracy: 86.2%
+  Inverted-U pattern: True
+  Analysis: Inverted-U pattern detected: peak at size 5 with 86.2% accuracy
+
+MARGINAL BENEFIT OF ADDITIONAL MODELS
+----------------------------------------
+  Size 2 → 3: +5.0%
+  Size 3 → 4: +0.4%
+  Size 4 → 5: +0.8%
+  Size 5 → 6: -0.9%
+
+TREND ANALYSIS
+----------------------------------------
+  Spearman correlation: 0.700
+  p-value: 0.1881
+  Interpretation: No significant linear trend (possible inverted-U pattern)
+
+============================================================
+END OF REPORT
+============================================================

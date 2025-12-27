@@ -1,0 +1,119 @@
+============================================================
+LLM COUNCIL GOVERNANCE PILOT STUDY - ANALYSIS REPORT
+============================================================
+
+OVERVIEW
+----------------------------------------
+Total trials: 16
+Structures tested: 4
+Benchmarks used: 2
+Valid trials (with results): 16
+Overall accuracy: 93.8%
+
+INDIVIDUAL MODEL ACCURACY
+----------------------------------------
+  gpt-4.1: 50.0% (2/4)
+  gemini-2.5-pro-preview: 50.0% (2/4)
+  claude-sonnet-4: 50.0% (2/4)
+  grok-3: 50.0% (2/4)
+
+INDIVIDUAL MODEL ACCURACY BY BENCHMARK
+----------------------------------------
+  GSM8K:
+    gpt-4.1: 0.0% (0/2)
+    gemini-2.5-pro-preview: 0.0% (0/2)
+    claude-sonnet-4: 0.0% (0/2)
+    grok-3: 0.0% (0/2)
+  TruthfulQA:
+    gpt-4.1: 100.0% (2/2)
+    gemini-2.5-pro-preview: 100.0% (2/2)
+    claude-sonnet-4: 100.0% (2/2)
+    grok-3: 100.0% (2/2)
+
+ACCURACY BY STRUCTURE
+----------------------------------------
+  Independent → Deliberate → Synthesize: 100.0% (4/4)
+  Independent → Deliberate → Vote: 100.0% (4/4)
+  Independent → Majority Vote: 100.0% (4/4)
+  Independent → Rank → Synthesize: 75.0% (3/4)
+
+ACCURACY BY BENCHMARK
+----------------------------------------
+  GSM8K: 87.5% (7/8)
+  TruthfulQA: 100.0% (8/8)
+
+ACCURACY MATRIX (Structure x Benchmark)
+----------------------------------------
+benchmark                               GSM8K TruthfulQA
+structure                                               
+Independent → Deliberate → Synthesize  100.0%     100.0%
+Independent → Deliberate → Vote        100.0%     100.0%
+Independent → Majority Vote            100.0%     100.0%
+Independent → Rank → Synthesize         50.0%     100.0%
+
+ACCURACY WITH 95% CONFIDENCE INTERVALS
+----------------------------------------
+  Independent → Rank → Synthesize: 75.0% [30.1%, 95.4%]
+  Independent → Majority Vote: 100.0% [51.0%, 100.0%]
+  Independent → Deliberate → Vote: 100.0% [51.0%, 100.0%]
+  Independent → Deliberate → Synthesize: 100.0% [51.0%, 100.0%]
+
+STATISTICAL TESTS
+----------------------------------------
+  Chi-square test:
+    Chi-square statistic: 3.20
+    p-value: 0.3618
+    Interpretation: No significant difference between structures
+
+PAIRWISE COMPARISONS (Bonferroni corrected)
+----------------------------------------
+  Independent → Rank → Synthesize vs Independent → Majority Vote: -25.0% (p=1.0000)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Vote: -25.0% (p=1.0000)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Synthesize: -25.0% (p=1.0000)
+  Independent → Majority Vote vs Independent → Deliberate → Vote: +0.0% (p=1.0000)
+  Independent → Majority Vote vs Independent → Deliberate → Synthesize: +0.0% (p=1.0000)
+  Independent → Deliberate → Vote vs Independent → Deliberate → Synthesize: +0.0% (p=1.0000)
+
+T-TESTS: STRUCTURES VS BEST INDIVIDUAL MODEL
+----------------------------------------
+  Best individual model: gpt-4.1 (50.0%)
+
+  Rank → Synthesize: 75.0% vs 50.0% (diff=+25.0%, t=1.00, p=0.3910)
+  Majority Vote: 100.0% vs 50.0% (diff=+50.0%, t=1.73, p=0.1817)
+  Deliberate → Vote: 100.0% vs 50.0% (diff=+50.0%, t=1.73, p=0.1817)
+  Deliberate → Synthesize: 100.0% vs 50.0% (diff=+50.0%, t=1.73, p=0.1817)
+
+DELIBERATION ANALYSIS
+----------------------------------------
+  Answer changes after deliberation:
+    Total changes:        2
+    Changed to correct:   1
+    Changed to wrong:     0
+    Net benefit:          +1 answers
+
+  Agreement levels (groupthink indicator):
+    Before deliberation:  93.8%
+    After deliberation:   96.9%
+    Change:               +3.1%
+
+  By model (change rate | fix rate when wrong | break rate when correct):
+    gpt-4.1: 25.0% | 50.0% | 0.0%
+    gemini-2.5-pro-preview: 0.0% | 0.0% | 0.0%
+    claude-sonnet-4: 0.0% | 0.0% | 0.0%
+    grok-3: 0.0% | 0.0% | 0.0%
+
+  Interpretation:
+    Deliberation increases agreement (potential groupthink)
+    Net positive: deliberation fixes more than it breaks (+1)
+    Simple majority vote may outperform deliberation by preserving independence
+
+TIMING SUMMARY (seconds)
+----------------------------------------
+  Independent → Deliberate → Synthesize: mean=62.05s, std=35.21s
+  Independent → Deliberate → Vote: mean=45.83s, std=21.41s
+  Independent → Majority Vote: mean=33.97s, std=20.89s
+  Independent → Rank → Synthesize: mean=46.11s, std=9.19s
+
+============================================================
+END OF REPORT
+============================================================

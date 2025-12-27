@@ -333,3 +333,232 @@ def smart_majority_vote(
 
     # Fall back to normalized string voting
     return majority_vote_normalized(answers, tiebreaker)
+
+
+def weighted_majority_vote(
+    answers: List[str],
+    models: List[str],
+    weights: dict,
+    tiebreaker: Optional[str] = None,
+) -> str:
+    """
+    Weighted majority vote where each model's vote is weighted by its accuracy.
+
+    Args:
+        answers: List of answer strings (parallel to models list)
+        models: List of model names (parallel to answers list)
+        weights: Dictionary mapping model names to weights (typically accuracy rates)
+        tiebreaker: Optional tiebreaker answer
+
+    Returns:
+        Winning answer string (highest weighted vote total)
+    """
+    if not answers or not models:
+        return ""
+
+    if len(answers) != len(models):
+        raise ValueError("answers and models must have the same length")
+
+    # Aggregate weights for each unique answer
+    answer_weights: dict = {}
+    answer_originals: dict = {}  # Store first occurrence for each answer
+
+    for answer, model in zip(answers, models):
+        if answer is None:
+            continue
+
+        # Normalize for comparison
+        norm_answer = normalize_answer(answer)
+        weight = weights.get(model, 1.0)  # Default weight of 1.0 if not found
+
+        if norm_answer not in answer_weights:
+            answer_weights[norm_answer] = 0.0
+            answer_originals[norm_answer] = answer
+
+        answer_weights[norm_answer] += weight
+
+    if not answer_weights:
+        return ""
+
+    # Find highest weighted answer
+    max_weight = max(answer_weights.values())
+    winners = [ans for ans, w in answer_weights.items() if w == max_weight]
+
+    # Handle ties
+    if len(winners) > 1 and tiebreaker:
+        norm_tiebreaker = normalize_answer(tiebreaker)
+        if norm_tiebreaker in winners:
+            return answer_originals[norm_tiebreaker]
+
+    # Return first winner (original form)
+    return answer_originals[winners[0]]
+
+
+def weighted_majority_vote_numeric(
+    answers: List[str],
+    models: List[str],
+    weights: dict,
+    tiebreaker: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Weighted majority vote for numeric answers.
+
+    Args:
+        answers: List of answer strings (numbers)
+        models: List of model names (parallel to answers)
+        weights: Dictionary mapping model names to weights
+        tiebreaker: Optional tiebreaker answer
+
+    Returns:
+        Winning answer in original string form, or None if no valid answers
+    """
+    if not answers or not models:
+        return None
+
+    if len(answers) != len(models):
+        raise ValueError("answers and models must have the same length")
+
+    # Group by numeric value
+    value_weights: dict = {}
+    value_originals: dict = {}
+
+    for answer, model in zip(answers, models):
+        val = normalize_numeric_answer(answer)
+        if val is None:
+            continue
+
+        weight = weights.get(model, 1.0)
+
+        if val not in value_weights:
+            value_weights[val] = 0.0
+            value_originals[val] = answer
+
+        value_weights[val] += weight
+
+    if not value_weights:
+        return None
+
+    # Find highest weighted
+    max_weight = max(value_weights.values())
+    winners = [val for val, w in value_weights.items() if w == max_weight]
+
+    # Handle ties
+    if len(winners) > 1 and tiebreaker:
+        tb_val = normalize_numeric_answer(tiebreaker)
+        if tb_val in winners:
+            return value_originals[tb_val]
+
+    return value_originals[winners[0]]
+
+
+def weighted_majority_vote_letter(
+    answers: List[str],
+    models: List[str],
+    weights: dict,
+    tiebreaker: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Weighted majority vote for letter answers (A, B, C, etc.).
+
+    Args:
+        answers: List of answer strings (letters)
+        models: List of model names (parallel to answers)
+        weights: Dictionary mapping model names to weights
+        tiebreaker: Optional tiebreaker answer
+
+    Returns:
+        Winning letter (uppercase), or None if no valid answers
+    """
+    if not answers or not models:
+        return None
+
+    if len(answers) != len(models):
+        raise ValueError("answers and models must have the same length")
+
+    # Group by letter
+    letter_weights: dict = {}
+
+    for answer, model in zip(answers, models):
+        letter = normalize_letter_answer(answer)
+        if letter is None:
+            continue
+
+        weight = weights.get(model, 1.0)
+
+        if letter not in letter_weights:
+            letter_weights[letter] = 0.0
+
+        letter_weights[letter] += weight
+
+    if not letter_weights:
+        return None
+
+    # Find highest weighted
+    max_weight = max(letter_weights.values())
+    winners = [letter for letter, w in letter_weights.items() if w == max_weight]
+
+    # Handle ties
+    if len(winners) > 1 and tiebreaker:
+        tb_letter = normalize_letter_answer(tiebreaker)
+        if tb_letter in winners:
+            return tb_letter
+
+    return winners[0]
+
+
+def smart_weighted_majority_vote(
+    answers: List[str],
+    models: List[str],
+    weights: dict,
+    tiebreaker: Optional[str] = None,
+) -> str:
+    """
+    Smart weighted majority vote that auto-detects answer type.
+
+    - If all answers parse as numbers → weighted numeric voting
+    - If all answers are single letters → weighted letter voting
+    - Otherwise → weighted normalized string voting
+
+    Args:
+        answers: List of answer strings
+        models: List of model names (parallel to answers)
+        weights: Dictionary mapping model names to weights (typically accuracy rates)
+        tiebreaker: Optional tiebreaker answer
+
+    Returns:
+        Winning answer string
+    """
+    if not answers:
+        return ""
+
+    # Filter out None answers while keeping model alignment
+    valid_pairs = [
+        (ans, model)
+        for ans, model in zip(answers, models)
+        if ans is not None
+    ]
+
+    if not valid_pairs:
+        return ""
+
+    valid_answers = [pair[0] for pair in valid_pairs]
+    valid_models = [pair[1] for pair in valid_pairs]
+
+    # Try numeric voting first
+    if all(normalize_numeric_answer(a) is not None for a in valid_answers):
+        result = weighted_majority_vote_numeric(
+            valid_answers, valid_models, weights, tiebreaker
+        )
+        if result:
+            return result
+
+    # Try letter voting
+    if all(normalize_letter_answer(a) is not None for a in valid_answers):
+        result = weighted_majority_vote_letter(
+            valid_answers, valid_models, weights, tiebreaker
+        )
+        if result:
+            return result
+
+    # Fall back to weighted normalized string voting
+    return weighted_majority_vote(valid_answers, valid_models, weights, tiebreaker)

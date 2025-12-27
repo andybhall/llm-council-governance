@@ -1,5 +1,6 @@
 """Analysis script for LLM council governance pilot study."""
 
+import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -638,6 +639,44 @@ def compute_individual_model_accuracy(df: pd.DataFrame) -> pd.DataFrame:
         })
 
     return pd.DataFrame(results).sort_values("accuracy", ascending=False)
+
+
+def export_model_weights(
+    df: pd.DataFrame,
+    output_path: str = "experiments/results/model_weights.json",
+) -> Dict[str, float]:
+    """
+    Export per-model accuracy as weights for weighted voting.
+
+    This function computes the accuracy of each individual model from the
+    pilot study and saves it as a JSON file that can be loaded by the
+    WeightedMajorityVote governance structure.
+
+    Args:
+        df: DataFrame with experiment results
+        output_path: Path to save the weights JSON file
+
+    Returns:
+        Dictionary mapping model names to their accuracy weights
+    """
+    model_acc = compute_individual_model_accuracy(df)
+
+    if model_acc.empty:
+        return {}
+
+    # Convert to dictionary: model -> accuracy
+    weights = {
+        row["model"]: row["accuracy"]
+        for _, row in model_acc.iterrows()
+    }
+
+    # Save to JSON
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, "w") as f:
+        json.dump(weights, f, indent=2)
+
+    return weights
 
 
 def compute_individual_model_accuracy_by_benchmark(df: pd.DataFrame) -> pd.DataFrame:
@@ -1525,6 +1564,7 @@ def analyze_pilot(
     output_dir: str = "experiments/results",
     report_path: Optional[str] = None,
     generate_charts_flag: bool = True,
+    export_weights: bool = True,
 ) -> pd.DataFrame:
     """
     Analyze pilot study results and generate report.
@@ -1533,6 +1573,7 @@ def analyze_pilot(
         output_dir: Directory containing results
         report_path: Optional path to save report (default: output_dir/analysis_report.txt)
         generate_charts_flag: Whether to generate chart images
+        export_weights: Whether to export model weights for weighted voting
 
     Returns:
         DataFrame with experiment results
@@ -1548,6 +1589,15 @@ def analyze_pilot(
     if generate_charts_flag and not df.empty:
         print("\nGenerating charts...")
         generate_charts(df, output_dir)
+
+    if export_weights and not df.empty:
+        weights_path = str(Path(output_dir) / "model_weights.json")
+        weights = export_model_weights(df, weights_path)
+        if weights:
+            print(f"\nExported model weights to: {weights_path}")
+            for model, weight in sorted(weights.items(), key=lambda x: -x[1]):
+                short_name = model.split("/")[-1] if "/" in model else model
+                print(f"  {short_name}: {weight:.3f}")
 
     return df
 
