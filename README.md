@@ -85,7 +85,16 @@ We tested whether weighting votes by each model's historical accuracy would impr
 | Simple majority vote | 87.1% |
 | Weighted majority vote | 85.8% |
 
-Weighted voting showed no improvement over simple majority voting. This suggests that for this council configuration, weighting votes by historical accuracy does not meaningfully improve outcomes—the models may contribute roughly equal marginal value despite differing individual accuracy rates.
+Weighted voting showed no improvement. However, **this comparison is not very informative** due to high model agreement:
+
+| Vote Pattern | Frequency | Weights Matter? |
+|--------------|-----------|-----------------|
+| 3-1 or 4-0 (clear majority) | 96% | No |
+| 2-2 tie | 4% | Potentially |
+
+With 96% of trials having a clear majority, weights rarely get a chance to influence the outcome. Additionally, the top 3 models have similar weights (0.826–0.853), so even in 2-2 ties, the weighted outcome usually matches what the stronger models already voted for.
+
+To properly test weighted voting, you would need either more model disagreement or more diverse accuracy rates.
 
 ### Summary
 
@@ -95,9 +104,10 @@ Weighted voting showed no improvement over simple majority voting. This suggests
 | Does deliberation help? | Yes, for these small models |
 | Does prompt diversity help? | No, with these prompts |
 | Does persona diversity help? | No, with these personas |
-| Does weighted voting help? | No |
 | Is voting or synthesis better? | Synthesis was better (+3%) |
 | Best structure tested? | Deliberate → Synthesize (90.8%) |
+
+*Note: Weighted voting was also tested but proved uninformative due to high model agreement (96% of trials had a clear majority).*
 
 ---
 
