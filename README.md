@@ -45,7 +45,7 @@ For the 7-9B parameter models tested, letting council members see each other's a
 | Majority Vote | 87.1% | [81.9%, 91.0%] |
 | Weighted Majority Vote | 85.8% | [81.5%, 90.7%] |
 
-*Note: The confidence intervals overlap substantially, meaning differences between structures are not statistically significant (χ²=2.94, p=0.57). However, all structures outperformed the best individual model, with Deliberate → Synthesize reaching significance (p=0.0016).*
+*Note: Differences between structures are not statistically significant (χ²=2.94, p=0.57). However, all structures outperformed the best individual model, with Deliberate → Synthesize reaching significance (p=0.0016).*
 
 In our data, deliberation appeared to help because:
 - Agreement increased from 90.2% → 94.2% after deliberation
@@ -63,7 +63,7 @@ In our experiments, synthesis-based and voting-based structures performed simila
 | Chairman synthesis | 90.8% | [85.7%, 93.8%] |
 | Voting | 87.8% | [81.8%, 90.9%] |
 
-The 3% difference is within sampling error (CIs overlap). A well-prompted chairman can effectively synthesize council opinions, but we cannot conclude it's better than voting based on this data.
+The 3% difference is within sampling error. A well-prompted chairman can effectively synthesize council opinions, but we cannot conclude it's better than voting based on this data.
 
 #### 4. Weighted voting did not improve accuracy
 
