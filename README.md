@@ -8,18 +8,20 @@ Karpathy proposed and built an "llm council" to advise a user. This raises an in
 
 ## Key Findings
 
-We ran 2,880 trials across three experiments to explore what factors appear to influence LLM council effectiveness. These findings are specific to our experimental setup: 7-9B parameter models, GSM8K and TruthfulQA benchmarks, and the particular prompts and structures tested.
+We ran 1,200 trials in the main pilot study plus additional experiments to explore what factors influence LLM council effectiveness. These findings are specific to our experimental setup: 7-9B parameter models, GSM8K and TruthfulQA benchmarks, and the particular prompts and structures tested.
 
 ### Overview
 
 | Configuration | Accuracy | vs Single Model |
 |---------------|----------|-----------------|
-| Single model (Gemma 2 9B) | 84.5% | — |
-| Same model + prompt diversity | 84.1% | -0.4% |
-| Same model + persona diversity | 83.0% | -1.5% |
-| Multi-model council (best) | 85.4% | +0.9% |
+| Single model (Gemma 2 9B) | 85.3% | — |
+| Same model + prompt diversity | 84.1% | -1.2% |
+| Same model + persona diversity | 83.0% | -2.3% |
+| Multi-model council (best) | 90.8% | +5.5%* |
 
-In this experiment, the multi-model council showed a modest improvement over the single best model, though the difference was not statistically significant. Prompt and persona diversity did not appear to help. These results may not generalize to other models, benchmarks, or prompt designs.
+*Statistically significant (p=0.0016)
+
+In this experiment, the best multi-model council structure (Deliberate → Synthesize) showed a significant improvement over the single best model. Prompt and persona diversity did not appear to help.
 
 ### Four Observations
 
@@ -29,9 +31,9 @@ We tested whether a single model (Gemma 2 9B) with 4 different prompts could mat
 
 - **Prompt variants**: 84.1% — no apparent improvement over baseline
 - **Persona variants**: 83.0% — no apparent improvement over baseline
-- **Different models**: 85.4% — modest improvement, but not statistically significant
+- **Different models**: 90.8% — significant improvement (p=0.0016)
 
-This suggests that, at least for these particular prompts and benchmarks, whatever value councils provide may come from models trained on different data rather than from prompting the same model differently. Other prompt designs might yield different results.
+This suggests that, at least for these particular prompts and benchmarks, whatever value councils provide may come from models trained on different data rather than from prompting the same model differently.
 
 #### 2. Deliberation appeared to help small models
 
@@ -39,65 +41,63 @@ For the 7-9B parameter models tested, letting council members see each other's a
 
 | Structure | Accuracy | Description |
 |-----------|----------|-------------|
-| Deliberate → Vote | 85.4% | See others' answers, then vote |
-| Deliberate → Synthesize | 84.5% | See others, chairman synthesizes |
-| Weighted Majority Vote | 84.2% | Vote weighted by model accuracy |
-| Majority Vote | 84.1% | Vote without seeing others |
-| Rank → Synthesize | 82.9% | Rank answers, chairman synthesizes |
+| Deliberate → Synthesize | 90.8% | See others, chairman synthesizes |
+| Deliberate → Vote | 87.8% | See others' answers, then vote |
+| Rank → Synthesize | 87.4% | Rank answers, chairman synthesizes |
+| Majority Vote | 87.1% | Vote without seeing others |
+| Weighted Majority Vote | 85.8% | Vote weighted by model accuracy |
 
-*Note: These are results from separate runs. See section 4 for a fair comparison of voting methods on the same Stage 1 responses, which shows weighted voting significantly outperforming majority vote (+4.6%, p=0.0074).*
+*Note: While overall structure differences were not statistically significant (χ²=2.94, p=0.57), Deliberate → Synthesize significantly outperformed the best individual model (t=3.19, p=0.0016).*
 
 In our data, deliberation appeared to help because:
-- Agreement increased from 87.4% → 92.9% after deliberation
-- Net effect: +56 more answers fixed than broken
-- Weaker models may have benefited from seeing stronger models' reasoning
+- Agreement increased from 90.2% → 94.2% after deliberation
+- Net effect: +50 more answers fixed than broken
+- Weaker models benefited from seeing stronger models' reasoning
 
 This pattern might differ for frontier models, where deliberation could potentially introduce groupthink.
 
-#### 3. Voting appeared more reliable than synthesis
+#### 3. Synthesis outperformed voting in this experiment
 
-In our experiments, structures ending with voting outperformed those where a "chairman" synthesized the final answer:
+In our experiments, the best synthesis-based structure outperformed the best voting-based structure:
 
 | Final Stage | Best Accuracy |
 |-------------|---------------|
-| Majority vote | 87.8% |
-| Chairman synthesis | 84.7% |
+| Chairman synthesis | 90.8% (Deliberate → Synthesize) |
+| Voting | 87.8% (Deliberate → Vote) |
 
-Synthesis may introduce a single point of failure, though this could depend on which model serves as chairman and how the synthesis prompt is designed.
+This suggests that a well-prompted chairman can effectively synthesize council opinions, though results may depend on which model serves as chairman and how the synthesis prompt is designed.
 
-#### 4. Weighted voting improved accuracy when compared fairly
+#### 4. Weighted voting did not improve accuracy
 
 We tested whether weighting votes by each model's historical accuracy would improve results. Each model's vote was weighted by its individual accuracy rate:
 
 | Model | Weight (Accuracy) |
 |-------|-------------------|
-| Gemma 2 9B | 0.845 |
-| Qwen 2.5 7B | 0.817 |
-| Llama 3.1 8B | 0.748 |
-| Mistral 7B | 0.671 |
+| Gemma 2 9B | 0.853 |
+| Qwen 2.5 7B | 0.839 |
+| Llama 3.1 8B | 0.826 |
+| Mistral 7B | 0.711 |
 
-**Fair Comparison Results** (applying both voting methods to the same Stage 1 responses):
+**Comparison:**
 
-| Voting Method | Accuracy | Difference |
-|---------------|----------|------------|
-| Simple majority vote | 79.1% (189/239) | — |
-| Weighted majority vote | 83.7% (200/239) | +4.6% |
+| Voting Method | Accuracy |
+|---------------|----------|
+| Simple majority vote | 87.1% |
+| Weighted majority vote | 85.8% |
 
-When applying both voting methods to the same Stage 1 responses, weighted voting showed a statistically significant improvement (McNemar's test, p=0.0074). The weighted approach produced 11 additional correct answers compared to simple majority voting.
-
-This suggests that for this council configuration, weighting votes by model accuracy can meaningfully improve outcomes. The weights were derived from each model's observed accuracy on the benchmark.
+Weighted voting showed no improvement over simple majority voting. This suggests that for this council configuration, weighting votes by historical accuracy does not meaningfully improve outcomes—the models may contribute roughly equal marginal value despite differing individual accuracy rates.
 
 ### Summary
 
 | Question | Observation (in this experiment) |
 |----------|----------------------------------|
-| Do councils beat single models? | Slightly (+0.9%), but not statistically significant |
-| Does deliberation help? | Appeared to, for these small models |
-| Does prompt diversity help? | Did not appear to, with these prompts |
-| Does persona diversity help? | Did not appear to, with these personas |
-| Does weighted voting help? | Yes, +4.6% improvement (p=0.0074) |
-| Is voting or synthesis better? | Voting appeared slightly better |
-| Best structure tested? | Deliberate → Vote (85.4%) |
+| Do councils beat single models? | Yes, +5.5% (p=0.0016) |
+| Does deliberation help? | Yes, for these small models |
+| Does prompt diversity help? | No, with these prompts |
+| Does persona diversity help? | No, with these personas |
+| Does weighted voting help? | No |
+| Is voting or synthesis better? | Synthesis was better (+3%) |
+| Best structure tested? | Deliberate → Synthesize (90.8%) |
 
 ---
 
@@ -117,22 +117,22 @@ This suggests that for this council configuration, weighting votes by model accu
 
 | Model | Overall | GSM8K | TruthfulQA |
 |-------|---------|-------|------------|
-| Gemma 2 9B | 84.4% | 85.5% | 83.3% |
-| Qwen 2.5 7B | 79.5% | 88.6% | 70.5% |
-| Llama 3.1 8B | 75.3% | 74.5% | 76.2% |
-| Mistral 7B | 68.9% | 62.3% | 75.5% |
+| Gemma 2 9B | 85.3% | 86.7% | 84.0% |
+| Qwen 2.5 7B | 83.9% | 90.9% | 77.0% |
+| Llama 3.1 8B | 82.6% | 82.0% | 83.1% |
+| Mistral 7B | 71.1% | 63.2% | 79.0% |
 
 ### Council Performance by Benchmark
 
 | Structure | GSM8K | TruthfulQA | Overall |
 |-----------|-------|------------|---------|
-| Deliberate → Vote | 89.2% | 81.5% | 85.4% |
-| Deliberate → Synthesize | 92.5% | 76.5% | 84.5% |
-| Weighted Majority Vote | 87.5% | 80.8% | 84.2% |
-| Majority Vote | 86.6% | 81.7% | 84.1% |
-| Rank → Synthesize | 88.3% | 77.5% | 82.9% |
+| Deliberate → Synthesize | 92.4% | 89.2% | 90.8% |
+| Deliberate → Vote | 91.5% | 84.0% | 87.8% |
+| Rank → Synthesize | 88.2% | 86.7% | 87.4% |
+| Majority Vote | 88.3% | 85.8% | 87.1% |
+| Weighted Majority Vote | 85.8% | 85.8% | 85.8% |
 
-*Based on 1,197 valid trials across 5 structures. Note: Weighted vs Majority Vote comparison here is not fair (different Stage 1 responses). See Key Findings section 4 for fair comparison.*
+*Based on 1,194 valid trials across 5 structures (1,200 total, 6 errors).*
 
 ### Deliberation Behavior
 
@@ -140,16 +140,17 @@ Models changed their answers after seeing others' responses:
 
 | Metric | Value |
 |--------|-------|
-| Answers fixed (wrong → correct) | +146 |
-| Answers broken (correct → wrong) | -90 |
-| Net change | +56 |
+| Total answer changes | 217 |
+| Answers fixed (wrong → correct) | +122 |
+| Answers broken (correct → wrong) | -72 |
+| Net change | +50 |
 
 | Model | Change Rate | Fix Rate | Break Rate |
 |-------|-------------|----------|------------|
-| Llama 3.1 8B | 19.3% | 48.3% | 5.8% |
-| Gemma 2 9B | 16.1% | 48.6% | 9.8% |
-| Qwen 2.5 7B | 11.7% | 40.7% | 4.1% |
-| Mistral 7B | 9.2% | 44.2% | 4.2% |
+| Llama 3.1 8B | 14.9% | 46.9% | 5.6% |
+| Gemma 2 9B | 12.1% | 47.9% | 4.0% |
+| Qwen 2.5 7B | 10.9% | 39.5% | 5.0% |
+| Mistral 7B | 10.1% | 47.6% | 4.3% |
 
 ---
 

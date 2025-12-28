@@ -7,138 +7,138 @@ OVERVIEW
 Total trials: 1200
 Structures tested: 5
 Benchmarks used: 2
-Valid trials (with results): 1197
-Overall accuracy: 84.2%
+Valid trials (with results): 1194
+Overall accuracy: 87.8%
 
 INDIVIDUAL MODEL ACCURACY
 ----------------------------------------
-  gemma-2-9b-it: 84.5% (1011/1197)
-  qwen-2.5-7b-instruct: 81.7% (978/1197)
-  llama-3.1-8b-instruct: 74.8% (895/1197)
-  mistral-7b-instruct: 67.1% (803/1197)
+  gemma-2-9b-it: 85.3% (1019/1194)
+  qwen-2.5-7b-instruct: 83.9% (1002/1194)
+  llama-3.1-8b-instruct: 82.6% (986/1194)
+  mistral-7b-instruct: 71.1% (849/1194)
 
 INDIVIDUAL MODEL ACCURACY BY BENCHMARK
 ----------------------------------------
   GSM8K:
-    qwen-2.5-7b-instruct: 88.6% (531/599)
-    gemma-2-9b-it: 85.6% (513/599)
-    llama-3.1-8b-instruct: 72.8% (436/599)
-    mistral-7b-instruct: 63.6% (381/599)
+    qwen-2.5-7b-instruct: 90.9% (541/595)
+    gemma-2-9b-it: 86.7% (516/595)
+    llama-3.1-8b-instruct: 82.0% (488/595)
+    mistral-7b-instruct: 63.2% (376/595)
   TruthfulQA:
-    gemma-2-9b-it: 83.3% (498/598)
-    llama-3.1-8b-instruct: 76.8% (459/598)
-    qwen-2.5-7b-instruct: 74.7% (447/598)
-    mistral-7b-instruct: 70.6% (422/598)
+    gemma-2-9b-it: 84.0% (503/599)
+    llama-3.1-8b-instruct: 83.1% (498/599)
+    mistral-7b-instruct: 79.0% (473/599)
+    qwen-2.5-7b-instruct: 77.0% (461/599)
 
 ACCURACY BY STRUCTURE
 ----------------------------------------
-  Independent → Deliberate → Synthesize: 84.5% (202/239)
-  Independent → Deliberate → Vote: 85.4% (204/239)
-  Independent → Majority Vote: 84.1% (201/239)
-  Independent → Rank → Synthesize: 82.9% (199/240)
-  Independent → Weighted Majority Vote: 84.2% (202/240)
+  Independent → Deliberate → Synthesize: 90.8% (216/238)
+  Independent → Deliberate → Vote: 87.8% (208/237)
+  Independent → Majority Vote: 87.1% (209/240)
+  Independent → Rank → Synthesize: 87.4% (209/239)
+  Independent → Weighted Majority Vote: 85.8% (206/240)
 
 ACCURACY BY BENCHMARK
 ----------------------------------------
-  GSM8K: 88.8% (532/599)
-  TruthfulQA: 79.6% (476/598)
+  GSM8K: 89.2% (531/595)
+  TruthfulQA: 86.3% (517/599)
 
 ACCURACY MATRIX (Structure x Benchmark)
 ----------------------------------------
 benchmark                              GSM8K TruthfulQA
 structure                                              
-Independent → Deliberate → Synthesize  92.5%      76.5%
-Independent → Deliberate → Vote        89.2%      81.5%
-Independent → Majority Vote            86.6%      81.7%
-Independent → Rank → Synthesize        88.3%      77.5%
-Independent → Weighted Majority Vote   87.5%      80.8%
+Independent → Deliberate → Synthesize  92.4%      89.2%
+Independent → Deliberate → Vote        91.5%      84.0%
+Independent → Majority Vote            88.3%      85.8%
+Independent → Rank → Synthesize        88.2%      86.7%
+Independent → Weighted Majority Vote   85.8%      85.8%
 
 ACCURACY WITH 95% CONFIDENCE INTERVALS
 ----------------------------------------
-  Independent → Rank → Synthesize: 82.9% [77.6%, 87.2%]
-  Independent → Majority Vote: 84.1% [78.9%, 88.2%]
-  Independent → Deliberate → Vote: 85.4% [80.3%, 89.3%]
-  Independent → Deliberate → Synthesize: 84.5% [79.4%, 88.6%]
-  Independent → Weighted Majority Vote: 84.2% [79.0%, 88.2%]
+  Independent → Majority Vote: 87.1% [82.2%, 90.7%]
+  Independent → Rank → Synthesize: 87.4% [82.6%, 91.1%]
+  Independent → Deliberate → Vote: 87.8% [83.0%, 91.3%]
+  Independent → Deliberate → Synthesize: 90.8% [86.4%, 93.8%]
+  Independent → Weighted Majority Vote: 85.8% [80.9%, 89.7%]
 
 STATISTICAL TESTS
 ----------------------------------------
   Chi-square test:
-    Chi-square statistic: 0.56
-    p-value: 0.9677
+    Chi-square statistic: 2.94
+    p-value: 0.5671
     Interpretation: No significant difference between structures
 
 PAIRWISE COMPARISONS (McNemar's test, Bonferroni corrected)
 ----------------------------------------
-  Independent → Rank → Synthesize vs Independent → Majority Vote: +0.0% (p=1.0000)
+  Independent → Majority Vote vs Independent → Rank → Synthesize: +2.5% (p=1.0000)
+    Discordant pairs: 8 (5 s1 wins, 3 s2 wins)
+  Independent → Majority Vote vs Independent → Deliberate → Vote: -1.3% (p=1.0000)
+    Discordant pairs: 7 (3 s1 wins, 4 s2 wins)
+  Independent → Majority Vote vs Independent → Deliberate → Synthesize: -3.8% (p=1.0000)
+    Discordant pairs: 5 (1 s1 wins, 4 s2 wins)
+  Independent → Majority Vote vs Independent → Weighted Majority Vote: +2.5% (p=1.0000)
+    Discordant pairs: 2 (2 s1 wins, 0 s2 wins)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Vote: -3.7% (p=1.0000)
+    Discordant pairs: 5 (1 s1 wins, 4 s2 wins)
+  Independent → Rank → Synthesize vs Independent → Deliberate → Synthesize: -6.2% (p=1.0000)
+    Discordant pairs: 7 (1 s1 wins, 6 s2 wins)
+  Independent → Rank → Synthesize vs Independent → Weighted Majority Vote: +0.0% (p=1.0000)
     Discordant pairs: 10 (5 s1 wins, 5 s2 wins)
-  Independent → Rank → Synthesize vs Independent → Deliberate → Vote: +1.2% (p=1.0000)
-    Discordant pairs: 9 (5 s1 wins, 4 s2 wins)
-  Independent → Rank → Synthesize vs Independent → Deliberate → Synthesize: -1.3% (p=1.0000)
-    Discordant pairs: 11 (5 s1 wins, 6 s2 wins)
-  Independent → Rank → Synthesize vs Independent → Weighted Majority Vote: +3.7% (p=1.0000)
-    Discordant pairs: 7 (5 s1 wins, 2 s2 wins)
-  Independent → Majority Vote vs Independent → Deliberate → Vote: +1.2% (p=1.0000)
-    Discordant pairs: 9 (5 s1 wins, 4 s2 wins)
-  Independent → Majority Vote vs Independent → Deliberate → Synthesize: -1.3% (p=1.0000)
-    Discordant pairs: 11 (5 s1 wins, 6 s2 wins)
-  Independent → Majority Vote vs Independent → Weighted Majority Vote: +3.7% (p=1.0000)
-    Discordant pairs: 9 (6 s1 wins, 3 s2 wins)
   Independent → Deliberate → Vote vs Independent → Deliberate → Synthesize: -2.5% (p=1.0000)
-    Discordant pairs: 10 (4 s1 wins, 6 s2 wins)
-  Independent → Deliberate → Vote vs Independent → Weighted Majority Vote: +2.5% (p=1.0000)
-    Discordant pairs: 10 (6 s1 wins, 4 s2 wins)
-  Independent → Deliberate → Synthesize vs Independent → Weighted Majority Vote: +5.0% (p=1.0000)
-    Discordant pairs: 12 (8 s1 wins, 4 s2 wins)
+    Discordant pairs: 6 (2 s1 wins, 4 s2 wins)
+  Independent → Deliberate → Vote vs Independent → Weighted Majority Vote: +3.7% (p=1.0000)
+    Discordant pairs: 9 (6 s1 wins, 3 s2 wins)
+  Independent → Deliberate → Synthesize vs Independent → Weighted Majority Vote: +6.2% (p=1.0000)
+    Discordant pairs: 7 (6 s1 wins, 1 s2 wins)
 
 T-TESTS: STRUCTURES VS BEST INDIVIDUAL MODEL
 ----------------------------------------
-  Best individual model: gemma-2-9b-it (82.9%)
+  Best individual model: gemma-2-9b-it (85.8%)
 
-  Rank → Synthesize: 82.9% vs 82.9% (diff=+0.0%, t=0.00, p=1.0000)
-  Majority Vote: 84.1% vs 85.4% (diff=-1.3%, t=-0.69, p=0.4924)
-  Deliberate → Vote: 85.4% vs 84.9% (diff=+0.4%, t=0.19, p=0.8479)
-  Deliberate → Synthesize: 84.5% vs 85.8% (diff=-1.3%, t=-0.48, p=0.6319)
-  Weighted Majority Vote: 84.2% vs 83.3% (diff=+0.8%, t=0.50, p=0.6181)
+  Majority Vote: 87.1% vs 85.8% (diff=+1.3%, t=0.65, p=0.5138)
+  Rank → Synthesize: 87.4% vs 85.4% (diff=+2.1%, t=1.00, p=0.3183)
+  Deliberate → Vote: 87.8% vs 84.8% (diff=+3.0%, t=1.46, p=0.1448)
+  Deliberate → Synthesize: 90.8% vs 84.5% (diff=+6.3%, t=3.19, p=0.0016)*
+  Weighted Majority Vote: 85.8% vs 86.2% (diff=-0.4%, t=-0.24, p=0.8089)
 
 DELIBERATION ANALYSIS
 ----------------------------------------
   Answer changes after deliberation:
-    Total changes:        257
-    Changed to correct:   146
-    Changed to wrong:     90
-    Net benefit:          +56 answers
+    Total changes:        217
+    Changed to correct:   122
+    Changed to wrong:     72
+    Net benefit:          +50 answers
 
   Agreement levels (groupthink indicator):
-    Before deliberation:  87.4%
-    After deliberation:   92.9%
-    Change:               +5.5%
+    Before deliberation:  90.2%
+    After deliberation:   94.2%
+    Change:               +4.0%
 
   By model (change rate | fix rate when wrong | break rate when correct):
-    llama-3.1-8b-instruct: 19.3% | 48.3% | 5.8%
-    mistral-7b-instruct: 9.2% | 44.2% | 4.2%
-    gemma-2-9b-it: 16.1% | 48.6% | 9.8%
-    qwen-2.5-7b-instruct: 11.7% | 40.7% | 4.1%
+    llama-3.1-8b-instruct: 14.9% | 46.9% | 5.6%
+    mistral-7b-instruct: 10.1% | 47.6% | 4.3%
+    gemma-2-9b-it: 12.1% | 47.9% | 4.0%
+    qwen-2.5-7b-instruct: 10.9% | 39.5% | 5.0%
 
   Interpretation:
     Deliberation increases agreement (potential groupthink)
-    Net positive: deliberation fixes more than it breaks (+56)
+    Net positive: deliberation fixes more than it breaks (+50)
     Simple majority vote may outperform deliberation by preserving independence
 
 TIMING SUMMARY (seconds)
 ----------------------------------------
-  Independent → Deliberate → Synthesize: mean=15.64s, std=13.17s
-  Independent → Deliberate → Vote: mean=17.66s, std=44.20s
-  Independent → Majority Vote: mean=11.77s, std=21.38s
-  Independent → Rank → Synthesize: mean=15.02s, std=33.62s
-  Independent → Weighted Majority Vote: mean=9.11s, std=10.60s
+  Independent → Deliberate → Synthesize: mean=25.65s, std=73.68s
+  Independent → Deliberate → Vote: mean=32.01s, std=132.04s
+  Independent → Majority Vote: mean=18.82s, std=70.10s
+  Independent → Rank → Synthesize: mean=20.54s, std=57.57s
+  Independent → Weighted Majority Vote: mean=19.68s, std=67.42s
 
 ERRORS
 ----------------------------------------
-  Total errors: 3
-    Independent → Deliberate → Synthesize: 1
-    Independent → Deliberate → Vote: 1
-    Independent → Majority Vote: 1
+  Total errors: 6
+    Independent → Deliberate → Synthesize: 2
+    Independent → Deliberate → Vote: 3
+    Independent → Rank → Synthesize: 1
 
 ============================================================
 END OF REPORT

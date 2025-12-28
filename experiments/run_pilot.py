@@ -12,6 +12,7 @@ import pandas as pd
 
 from backend.evaluation.base import Benchmark, Question
 from backend.governance.base import CouncilResult, GovernanceStructure
+from experiments.manifest import create_manifest
 
 
 def save_results(
@@ -117,9 +118,10 @@ async def run_experiment(
     output_dir: str = "experiments/results",
     resume: bool = True,
     verbose: bool = True,
+    max_concurrent: int = 20,
 ) -> pd.DataFrame:
     """
-    Run the full pilot experiment.
+    Run the full pilot experiment with parallel trial execution.
 
     Args:
         structures: List of governance structures to test
@@ -129,10 +131,23 @@ async def run_experiment(
         output_dir: Directory to save results
         resume: Whether to resume from existing results
         verbose: Whether to print progress
+        max_concurrent: Maximum number of concurrent trials (default: 20)
 
     Returns:
         DataFrame with all experiment results
     """
+    from backend.openrouter import close_shared_client
+
+    # Generate experiment manifest for reproducibility
+    config = {
+        "structures": [s.name for s in structures],
+        "benchmarks": [b.name for b in benchmarks],
+        "n_questions": n_questions,
+        "n_replications": n_replications,
+        "temperature": 0.0,  # Default from openrouter.py
+    }
+    create_manifest(config, output_dir=output_dir)
+
     # Load existing results if resuming
     results = load_results(output_dir) if resume else []
     completed = get_completed_keys(results) if resume else set()
@@ -143,90 +158,144 @@ async def run_experiment(
     # Track experiment start
     experiment_start = datetime.now().isoformat()
 
-    # Calculate total trials for progress reporting
-    total_questions = 0
+    # Build list of all pending trials
+    pending_trials = []
     for benchmark in benchmarks:
         questions = benchmark.load_questions(n_questions)
-        total_questions += len(questions)
-
-    total_trials = total_questions * len(structures) * n_replications
-    completed_trials = len(completed)
-
-    if verbose:
-        print(f"Running experiment: {total_trials} total trials")
-        print(f"  Benchmarks: {[b.name for b in benchmarks]}")
-        print(f"  Structures: {[s.name for s in structures]}")
-        print(f"  Replications: {n_replications}")
-
-    # Run experiment loop
-    trial_count = completed_trials
-
-    for benchmark in benchmarks:
-        questions = benchmark.load_questions(n_questions)
-
-        if verbose:
-            print(f"\nBenchmark: {benchmark.name} ({len(questions)} questions)")
-
         for question in questions:
             for structure in structures:
                 for rep in range(n_replications):
-                    # Check if already completed
                     key = (benchmark.name, question.id, structure.name, rep)
-                    if key in completed:
-                        continue
+                    if key not in completed:
+                        pending_trials.append({
+                            "benchmark": benchmark,
+                            "question": question,
+                            "structure": structure,
+                            "rep": rep,
+                            "key": key,
+                        })
 
-                    trial_count += 1
-                    if verbose:
-                        print(
-                            f"  [{trial_count}/{total_trials}] "
-                            f"{structure.name} on {question.id} (rep {rep + 1})"
-                        )
-
-                    try:
-                        # Run the trial
-                        trial_result = await run_single_trial(
-                            structure, question, benchmark
-                        )
-
-                        # Build result record
-                        result = {
-                            "benchmark": benchmark.name,
-                            "question_id": question.id,
-                            "structure": structure.name,
-                            "replication": rep,
-                            "timestamp": datetime.now().isoformat(),
-                            "experiment_start": experiment_start,
-                            **trial_result,
-                        }
-
-                        results.append(result)
-
-                        # Save incrementally
-                        save_results(results, output_dir)
-
-                    except Exception as e:
-                        if verbose:
-                            print(f"    ERROR: {e}")
-
-                        # Log the error
-                        results.append(
-                            {
-                                "benchmark": benchmark.name,
-                                "question_id": question.id,
-                                "structure": structure.name,
-                                "replication": rep,
-                                "timestamp": datetime.now().isoformat(),
-                                "experiment_start": experiment_start,
-                                "is_correct": None,
-                                "predicted": None,
-                                "expected": question.ground_truth,
-                                "error": str(e),
-                            }
-                        )
-                        save_results(results, output_dir)
+    total_trials = len(completed) + len(pending_trials)
 
     if verbose:
+        print(f"Running experiment: {total_trials} total trials")
+        print(f"  Pending: {len(pending_trials)} trials")
+        print(f"  Benchmarks: {[b.name for b in benchmarks]}")
+        print(f"  Structures: {[s.name for s in structures]}")
+        print(f"  Replications: {n_replications}")
+        print(f"  Max concurrent: {max_concurrent}")
+
+    if not pending_trials:
+        if verbose:
+            print("\nNo pending trials. Experiment already complete.")
+        return pd.DataFrame(results)
+
+    # Semaphore to limit concurrent trials
+    semaphore = asyncio.Semaphore(max_concurrent)
+
+    # Thread-safe counters and result collection
+    results_lock = asyncio.Lock()
+    progress_lock = asyncio.Lock()
+    completed_count = [0]  # Use list for mutable reference
+    last_save_count = [0]
+
+    # Per-trial timeout (5 minutes max per trial to prevent hangs)
+    trial_timeout = 300
+
+    async def run_bounded_trial(trial_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Run a single trial with semaphore-bounded concurrency and timeout."""
+        async with semaphore:
+            benchmark = trial_info["benchmark"]
+            question = trial_info["question"]
+            structure = trial_info["structure"]
+            rep = trial_info["rep"]
+
+            try:
+                # Wrap with timeout to prevent indefinite hangs
+                trial_result = await asyncio.wait_for(
+                    run_single_trial(structure, question, benchmark),
+                    timeout=trial_timeout,
+                )
+                result = {
+                    "benchmark": benchmark.name,
+                    "question_id": question.id,
+                    "structure": structure.name,
+                    "replication": rep,
+                    "timestamp": datetime.now().isoformat(),
+                    "experiment_start": experiment_start,
+                    **trial_result,
+                }
+            except asyncio.TimeoutError:
+                result = {
+                    "benchmark": benchmark.name,
+                    "question_id": question.id,
+                    "structure": structure.name,
+                    "replication": rep,
+                    "timestamp": datetime.now().isoformat(),
+                    "experiment_start": experiment_start,
+                    "is_correct": None,
+                    "predicted": None,
+                    "expected": question.ground_truth,
+                    "error": f"Trial timeout after {trial_timeout}s",
+                }
+                if verbose:
+                    async with progress_lock:
+                        print(f"  TIMEOUT on {question.id}/{structure.name}")
+            except Exception as e:
+                result = {
+                    "benchmark": benchmark.name,
+                    "question_id": question.id,
+                    "structure": structure.name,
+                    "replication": rep,
+                    "timestamp": datetime.now().isoformat(),
+                    "experiment_start": experiment_start,
+                    "is_correct": None,
+                    "predicted": None,
+                    "expected": question.ground_truth,
+                    "error": str(e),
+                }
+                if verbose:
+                    async with progress_lock:
+                        print(f"  ERROR on {question.id}: {e}")
+
+            # Update progress and save periodically
+            async with results_lock:
+                results.append(result)
+                completed_count[0] += 1
+
+                # Progress reporting
+                if verbose and completed_count[0] % 10 == 0:
+                    print(
+                        f"  Progress: {completed_count[0] + len(completed)}/{total_trials} "
+                        f"({100 * (completed_count[0] + len(completed)) / total_trials:.1f}%)"
+                    )
+
+                # Save every 25 results instead of every single one
+                if completed_count[0] - last_save_count[0] >= 25:
+                    save_results(results, output_dir)
+                    last_save_count[0] = completed_count[0]
+
+            return result
+
+    # Run all pending trials in parallel (semaphore limits concurrency)
+    if verbose:
+        print(f"\nStarting parallel execution...")
+        start_time = time.time()
+
+    try:
+        await asyncio.gather(*[run_bounded_trial(t) for t in pending_trials])
+    finally:
+        # Always close the shared HTTP client when done
+        await close_shared_client()
+
+    # Final save
+    save_results(results, output_dir)
+
+    if verbose:
+        elapsed = time.time() - start_time
+        rate = len(pending_trials) / elapsed * 60 if elapsed > 0 else 0
         print(f"\nExperiment complete. {len(results)} total results saved.")
+        print(f"  Time: {elapsed:.1f}s ({rate:.1f} trials/min)")
 
     return pd.DataFrame(results)
 

@@ -37,6 +37,9 @@ async def test_query_model_with_mock(monkeypatch):
     """Verify query_model works with mocked HTTP client."""
     from backend import openrouter
 
+    # Reset shared client before test
+    openrouter._shared_client = None
+
     # Mock response data
     mock_response_data = {
         "choices": [{"message": {"content": "Mock response. FINAL ANSWER: 42"}}]
@@ -50,10 +53,16 @@ async def test_query_model_with_mock(monkeypatch):
             return mock_response_data
 
     class MockAsyncClient:
+        def __init__(self, **kwargs):
+            pass
+
         async def __aenter__(self):
             return self
 
         async def __aexit__(self, *args):
+            pass
+
+        async def aclose(self):
             pass
 
         async def post(self, *args, **kwargs):
@@ -67,11 +76,17 @@ async def test_query_model_with_mock(monkeypatch):
 
     assert result["content"] == "Mock response. FINAL ANSWER: 42"
 
+    # Clean up
+    openrouter._shared_client = None
+
 
 @pytest.mark.asyncio
 async def test_query_models_parallel_with_mock(monkeypatch):
     """Verify query_models_parallel works with mocked HTTP client."""
     from backend import openrouter
+
+    # Reset shared client before test
+    openrouter._shared_client = None
 
     call_count = 0
 
@@ -90,10 +105,16 @@ async def test_query_models_parallel_with_mock(monkeypatch):
             }
 
     class MockAsyncClient:
+        def __init__(self, **kwargs):
+            pass
+
         async def __aenter__(self):
             return self
 
         async def __aexit__(self, *args):
+            pass
+
+        async def aclose(self):
             pass
 
         async def post(self, url, headers=None, json=None, **kwargs):
@@ -115,3 +136,6 @@ async def test_query_models_parallel_with_mock(monkeypatch):
     assert result["model-a"]["content"] == "Response from model-a"
     assert result["model-b"]["content"] == "Response from model-b"
     assert call_count == 2  # Verify both models were queried
+
+    # Clean up
+    openrouter._shared_client = None
