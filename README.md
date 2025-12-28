@@ -17,11 +17,9 @@ We ran 1,200 trials in the main pilot study plus additional experiments to explo
 | Single model (Gemma 2 9B) | 85.3% | — |
 | Same model + prompt diversity | 84.1% | -1.2% |
 | Same model + persona diversity | 83.0% | -2.3% |
-| Multi-model council (best) | 90.8% | +5.5%* |
+| Multi-model council (range) | 85.8–90.8% | +0.5% to +5.5% |
 
-*Statistically significant (p=0.0016)
-
-In this experiment, the best multi-model council structure (Deliberate → Synthesize) showed a significant improvement over the single best model. Prompt and persona diversity did not appear to help.
+The top-performing council structure (Deliberate → Synthesize at 90.8%) showed a significant improvement over the single best model (p=0.0016). However, differences *between* structures were not statistically significant—all structures performed similarly within sampling error. Prompt and persona diversity did not appear to help.
 
 ### Four Observations
 
@@ -31,23 +29,23 @@ We tested whether a single model (Gemma 2 9B) with 4 different prompts could mat
 
 - **Prompt variants**: 84.1% — no apparent improvement over baseline
 - **Persona variants**: 83.0% — no apparent improvement over baseline
-- **Different models**: 90.8% — significant improvement (p=0.0016)
+- **Different models**: 85.8–90.8% — improvement over baseline
 
-This suggests that, at least for these particular prompts and benchmarks, whatever value councils provide may come from models trained on different data rather than from prompting the same model differently.
+The best-performing council structure significantly outperformed the single best model (p=0.0016). This suggests that, at least for these particular prompts and benchmarks, whatever value councils provide may come from models trained on different data rather than from prompting the same model differently.
 
 #### 2. Deliberation appeared to help small models
 
 For the 7-9B parameter models tested, letting council members see each other's answers before voting appeared to improve accuracy:
 
-| Structure | Accuracy | Description |
-|-----------|----------|-------------|
-| Deliberate → Synthesize | 90.8% | See others, chairman synthesizes |
-| Deliberate → Vote | 87.8% | See others' answers, then vote |
-| Rank → Synthesize | 87.4% | Rank answers, chairman synthesizes |
-| Majority Vote | 87.1% | Vote without seeing others |
-| Weighted Majority Vote | 85.8% | Vote weighted by model accuracy |
+| Structure | Accuracy | 95% CI |
+|-----------|----------|--------|
+| Deliberate → Synthesize | 90.8% | [85.7%, 93.8%] |
+| Deliberate → Vote | 87.8% | [81.8%, 90.9%] |
+| Rank → Synthesize | 87.4% | [82.6%, 91.5%] |
+| Majority Vote | 87.1% | [81.9%, 91.0%] |
+| Weighted Majority Vote | 85.8% | [81.5%, 90.7%] |
 
-*Note: While overall structure differences were not statistically significant (χ²=2.94, p=0.57), Deliberate → Synthesize significantly outperformed the best individual model (t=3.19, p=0.0016).*
+*Note: The confidence intervals overlap substantially, meaning differences between structures are not statistically significant (χ²=2.94, p=0.57). However, all structures outperformed the best individual model, with Deliberate → Synthesize reaching significance (p=0.0016).*
 
 In our data, deliberation appeared to help because:
 - Agreement increased from 90.2% → 94.2% after deliberation
@@ -56,16 +54,16 @@ In our data, deliberation appeared to help because:
 
 This pattern might differ for frontier models, where deliberation could potentially introduce groupthink.
 
-#### 3. Synthesis outperformed voting in this experiment
+#### 3. No clear winner between voting and synthesis
 
-In our experiments, the best synthesis-based structure outperformed the best voting-based structure:
+In our experiments, synthesis-based and voting-based structures performed similarly:
 
-| Final Stage | Best Accuracy |
-|-------------|---------------|
-| Chairman synthesis | 90.8% (Deliberate → Synthesize) |
-| Voting | 87.8% (Deliberate → Vote) |
+| Final Stage | Best Accuracy | 95% CI |
+|-------------|---------------|--------|
+| Chairman synthesis | 90.8% | [85.7%, 93.8%] |
+| Voting | 87.8% | [81.8%, 90.9%] |
 
-This suggests that a well-prompted chairman can effectively synthesize council opinions, though results may depend on which model serves as chairman and how the synthesis prompt is designed.
+The 3% difference is within sampling error (CIs overlap). A well-prompted chairman can effectively synthesize council opinions, but we cannot conclude it's better than voting based on this data.
 
 #### 4. Weighted voting did not improve accuracy
 
@@ -100,14 +98,14 @@ To properly test weighted voting, you would need either more model disagreement 
 
 | Question | Observation (in this experiment) |
 |----------|----------------------------------|
-| Do councils beat single models? | Yes, +5.5% (p=0.0016) |
-| Does deliberation help? | Yes, for these small models |
+| Do councils beat single models? | Yes, +5.5% for best structure (p=0.0016) |
+| Does deliberation help? | Appears to, for these small models |
 | Does prompt diversity help? | No, with these prompts |
 | Does persona diversity help? | No, with these personas |
-| Is voting or synthesis better? | Synthesis was better (+3%) |
-| Best structure tested? | Deliberate → Synthesize (90.8%) |
+| Is voting or synthesis better? | No significant difference |
+| Best structure tested? | Unclear—all within sampling error |
 
-*Note: Weighted voting was also tested but proved uninformative due to high model agreement (96% of trials had a clear majority).*
+*Notes: (1) Differences between structures were not statistically significant; ~210 trials per structure yields wide confidence intervals. (2) Weighted voting was also tested but proved uninformative due to high model agreement.*
 
 ---
 
