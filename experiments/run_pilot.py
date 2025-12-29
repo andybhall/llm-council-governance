@@ -319,6 +319,7 @@ async def run_pilot(
     from backend.config import CHAIRMAN_MODEL, COUNCIL_MODELS, WEIGHTS_FILE
     from backend.evaluation import GSM8KBenchmark, TruthfulQABenchmark
     from backend.governance import (
+        AgendaSetterVetoStructure,
         DeliberateSynthesizeStructure,
         DeliberateVoteStructure,
         IndependentRankSynthesize,
@@ -340,6 +341,8 @@ async def run_pilot(
             n_samples=2 * len(COUNCIL_MODELS) + 1,  # Match 2N+1 call budget
             temperature=0.7,
         ),
+        # Agenda setter + veto: political economy mechanism
+        AgendaSetterVetoStructure(COUNCIL_MODELS, CHAIRMAN_MODEL),
     ]
 
     # Initialize benchmarks

@@ -2,7 +2,7 @@
 
 import re
 from collections import Counter
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 
 def extract_final_answer(response: str) -> Optional[str]:
@@ -50,6 +50,42 @@ def extract_final_answer_with_fallback(response: str) -> str:
 
     # Last resort: return last 100 chars
     return text[-100:]
+
+
+def extract_vote_accept_veto(response: str) -> Optional[Literal["ACCEPT", "VETO"]]:
+    """
+    Extract ACCEPT or VETO vote from a response.
+
+    Looks for patterns like:
+    - "FINAL VOTE: ACCEPT"
+    - "FINAL VOTE: VETO"
+    - "I vote ACCEPT"
+    - "My vote is VETO"
+
+    Args:
+        response: The full response text from an LLM
+
+    Returns:
+        "ACCEPT" or "VETO" if found, None otherwise
+    """
+    if not response:
+        return None
+
+    text = response.upper()
+
+    # Try structured format first
+    pattern = r"FINAL\s*VOTE:\s*(ACCEPT|VETO)"
+    match = re.search(pattern, text)
+    if match:
+        return match.group(1)  # type: ignore
+
+    # Fallback: look for the words anywhere
+    if "VETO" in text:
+        return "VETO"
+    if "ACCEPT" in text:
+        return "ACCEPT"
+
+    return None
 
 
 def majority_vote(answers: List[str], tiebreaker: Optional[str] = None) -> str:

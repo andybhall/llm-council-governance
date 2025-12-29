@@ -9,6 +9,7 @@ from backend.governance.deliberate_vote import DeliberateVoteStructure
 from backend.governance.deliberate_synthesize import DeliberateSynthesizeStructure
 from backend.governance.weighted_vote import WeightedMajorityVote
 from backend.governance.self_consistency_vote import SelfConsistencyVoteStructure
+from backend.governance.agenda_veto import AgendaSetterVetoStructure
 from backend.governance.utils import (
     extract_final_answer,
     extract_final_answer_with_fallback,
@@ -35,6 +36,7 @@ STRUCTURES: Dict[str, Type[GovernanceStructure]] = {
     "deliberate_synthesize": DeliberateSynthesizeStructure,
     "weighted_vote": WeightedMajorityVote,
     "self_consistency": SelfConsistencyVoteStructure,
+    "agenda_veto": AgendaSetterVetoStructure,
     # Aliases for backward compatibility
     "structure_a": IndependentRankSynthesize,
     "structure_b": MajorityVoteStructure,
@@ -72,6 +74,7 @@ def list_structures() -> list[str]:
         "deliberate_synthesize",
         "weighted_vote",
         "self_consistency",
+        "agenda_veto",
     ]
 
 __all__ = [
@@ -85,6 +88,7 @@ __all__ = [
     "DeliberateSynthesizeStructure",
     "WeightedMajorityVote",
     "SelfConsistencyVoteStructure",
+    "AgendaSetterVetoStructure",
     # Structure registry
     "STRUCTURES",
     "get_structure",
