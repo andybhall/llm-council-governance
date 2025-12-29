@@ -1,12 +1,13 @@
 """Tests for weighted voting functionality and Structure E."""
 
+import importlib
 import json
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from backend.governance.structure_e import WeightedMajorityVote
+from backend.governance import WeightedMajorityVote
 from backend.governance.utils import (
     smart_weighted_majority_vote,
     weighted_majority_vote,
@@ -193,11 +194,11 @@ class TestWeightedMajorityVoteStructure:
         """Mock openrouter API calls for testing."""
         call_log = []
 
-        async def mock_query_model(model, messages):
+        async def mock_query_model(model, messages, temperature=0.0, timeout=None):
             call_log.append({"type": "single", "model": model, "messages": messages})
             return {"content": "The chairman thinks 4. FINAL ANSWER: 4"}
 
-        async def mock_query_models_parallel(models, messages):
+        async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
             call_log.append({"type": "parallel", "models": models, "messages": messages})
             # expert (high weight) says 5, others say 4
             results = {}
@@ -208,10 +209,12 @@ class TestWeightedMajorityVoteStructure:
                     results[model] = {"content": f"{model} says FINAL ANSWER: 4"}
             return results
 
-        import backend.governance.structure_e as struct_e_module
+        # Patch at actual implementation locations (use importlib to avoid namespace collision)
+        base_module = importlib.import_module("backend.governance.base")
 
-        monkeypatch.setattr(struct_e_module, "query_model", mock_query_model)
-        monkeypatch.setattr(struct_e_module, "query_models_parallel", mock_query_models_parallel)
+        # Both query_model and query_models_parallel are now in base class
+        monkeypatch.setattr(base_module, "query_model", mock_query_model)
+        monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
 
         return call_log
 
@@ -340,3 +343,69 @@ class TestWeightedVoteImports:
         from backend.governance import smart_weighted_majority_vote
 
         assert callable(smart_weighted_majority_vote)
+
+
+class TestWeightedVoteMetadata:
+    """Test vote metadata for weighted voting structure."""
+
+    @pytest.fixture
+    def mock_openrouter(self, monkeypatch):
+        """Mock openrouter API calls for testing."""
+        call_log = []
+
+        async def mock_query_model(model, messages, temperature=0.0, timeout=None):
+            call_log.append({"type": "single", "model": model})
+            return {"content": "Chairman says FINAL ANSWER: 4"}
+
+        async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
+            call_log.append({"type": "parallel", "models": models})
+            results = {}
+            for i, model in enumerate(models):
+                if i == 0:
+                    results[model] = {"content": f"{model} says FINAL ANSWER: 5"}
+                else:
+                    results[model] = {"content": f"{model} says FINAL ANSWER: 4"}
+            return results
+
+        base_module = importlib.import_module("backend.governance.base")
+        monkeypatch.setattr(base_module, "query_model", mock_query_model)
+        monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
+
+        return call_log
+
+    @pytest.mark.asyncio
+    async def test_vote_metadata_present(self, mock_openrouter):
+        """Verify Stage 3 data includes comprehensive vote metadata."""
+        structure = WeightedMajorityVote(
+            council_models=["model1", "model2", "model3"],
+            chairman_model="chairman",
+            weights={"model1": 1.0, "model2": 1.0, "model3": 1.0},
+        )
+        result = await structure.run("What is 2+2?")
+
+        stage3 = result.stage3_data
+
+        # Check all vote metadata fields are present
+        assert "raw_answers" in stage3
+        assert "normalized_answers" in stage3
+        assert "vote_counts" in stage3
+        assert "is_tie" in stage3
+        assert "winning_answer" in stage3
+        assert "tiebreaker_used" in stage3
+
+        # Verify raw_answers has all models
+        assert len(stage3["raw_answers"]) == 3
+
+        # Verify normalized_answers has all models
+        assert len(stage3["normalized_answers"]) == 3
+
+        # Verify vote_counts contains weighted values (floats)
+        assert isinstance(stage3["vote_counts"], dict)
+        for weight in stage3["vote_counts"].values():
+            assert isinstance(weight, (int, float))
+
+        # Verify is_tie is boolean
+        assert isinstance(stage3["is_tie"], bool)
+
+        # Verify tiebreaker_used is boolean
+        assert isinstance(stage3["tiebreaker_used"], bool)

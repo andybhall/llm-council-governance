@@ -2,7 +2,7 @@
 
 import re
 from collections import Counter
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def extract_final_answer(response: str) -> Optional[str]:
@@ -75,7 +75,8 @@ def majority_vote(answers: List[str], tiebreaker: Optional[str] = None) -> str:
     elif tiebreaker and tiebreaker in winners:
         return tiebreaker
     else:
-        return winners[0]  # Arbitrary if no tiebreaker
+        # Sort for deterministic tie resolution (alphabetical order)
+        return sorted(winners)[0]
 
 
 def normalize_answer(answer: str) -> str:
@@ -157,7 +158,8 @@ def majority_vote_normalized(
             winners = [norm_tiebreaker]
 
     # Return first original form of winning normalized answer
-    winning_norm = winners[0]
+    # Sort for deterministic tie resolution
+    winning_norm = sorted(winners)[0]
     return normalized_to_originals[winning_norm][0]
 
 
@@ -253,7 +255,8 @@ def majority_vote_numeric(
             winners = [tb_val]
 
     # Return first original form of winner
-    winning_val = winners[0]
+    # Sort for deterministic tie resolution (numeric order)
+    winning_val = sorted(winners)[0]
     return value_to_originals[winning_val][0]
 
 
@@ -296,7 +299,8 @@ def majority_vote_letter(
         if tb_letter in winners:
             winners = [tb_letter]
 
-    return winners[0]
+    # Sort for deterministic tie resolution (alphabetical order)
+    return sorted(winners)[0]
 
 
 def smart_majority_vote(
@@ -390,8 +394,8 @@ def weighted_majority_vote(
         if norm_tiebreaker in winners:
             return answer_originals[norm_tiebreaker]
 
-    # Return first winner (original form)
-    return answer_originals[winners[0]]
+    # Return winner (original form), sorted for deterministic tie resolution
+    return answer_originals[sorted(winners)[0]]
 
 
 def weighted_majority_vote_numeric(
@@ -448,7 +452,8 @@ def weighted_majority_vote_numeric(
         if tb_val in winners:
             return value_originals[tb_val]
 
-    return value_originals[winners[0]]
+    # Sort for deterministic tie resolution (numeric order)
+    return value_originals[sorted(winners)[0]]
 
 
 def weighted_majority_vote_letter(
@@ -503,7 +508,8 @@ def weighted_majority_vote_letter(
         if tb_letter in winners:
             return tb_letter
 
-    return winners[0]
+    # Sort for deterministic tie resolution (alphabetical order)
+    return sorted(winners)[0]
 
 
 def smart_weighted_majority_vote(
@@ -562,3 +568,172 @@ def smart_weighted_majority_vote(
 
     # Fall back to weighted normalized string voting
     return weighted_majority_vote(valid_answers, valid_models, weights, tiebreaker)
+
+
+def compute_vote_metadata(
+    extracted_answers: Dict[str, Optional[str]],
+    tiebreaker: Optional[str] = None,
+) -> Tuple[str, Dict[str, Any]]:
+    """
+    Compute vote metadata for regular (unweighted) majority voting.
+
+    Args:
+        extracted_answers: Dictionary mapping model names to extracted answers
+        tiebreaker: Optional tiebreaker answer (e.g., chairman's answer)
+
+    Returns:
+        Tuple of (winning_answer, metadata_dict) where metadata_dict contains:
+        - raw_answers: {model: raw_answer}
+        - normalized_answers: {model: normalized_answer_or_none}
+        - vote_counts: {normalized_answer: count}
+        - is_tie: bool
+        - winning_answer: normalized winning answer
+        - tiebreaker_used: bool
+    """
+    # Build raw and normalized answer maps
+    raw_answers = {}
+    normalized_answers = {}
+
+    for model, answer in extracted_answers.items():
+        raw_answers[model] = answer
+        if answer is not None:
+            normalized_answers[model] = normalize_answer(answer)
+        else:
+            normalized_answers[model] = None
+
+    # Count votes by normalized answer
+    valid_normalized = [na for na in normalized_answers.values() if na is not None]
+
+    if not valid_normalized:
+        # No valid answers
+        return "", {
+            "raw_answers": raw_answers,
+            "normalized_answers": normalized_answers,
+            "vote_counts": {},
+            "is_tie": False,
+            "winning_answer": "",
+            "tiebreaker_used": False,
+        }
+
+    vote_counts = dict(Counter(valid_normalized))
+    max_count = max(vote_counts.values())
+    winners = [ans for ans, count in vote_counts.items() if count == max_count]
+    is_tie = len(winners) > 1
+
+    # Determine winner
+    tiebreaker_used = False
+    if is_tie and tiebreaker:
+        norm_tiebreaker = normalize_answer(tiebreaker)
+        if norm_tiebreaker in winners:
+            winning_norm = norm_tiebreaker
+            tiebreaker_used = True
+        else:
+            winning_norm = sorted(winners)[0]
+    else:
+        winning_norm = sorted(winners)[0] if winners else ""
+
+    # Get original form of winning answer
+    valid_answers = [a for a in extracted_answers.values() if a is not None]
+    winning_answer = smart_majority_vote(valid_answers, tiebreaker=tiebreaker)
+
+    return winning_answer, {
+        "raw_answers": raw_answers,
+        "normalized_answers": normalized_answers,
+        "vote_counts": vote_counts,
+        "is_tie": is_tie,
+        "winning_answer": winning_norm,
+        "tiebreaker_used": tiebreaker_used,
+    }
+
+
+def compute_weighted_vote_metadata(
+    extracted_answers: Dict[str, Optional[str]],
+    weights: Dict[str, float],
+    tiebreaker: Optional[str] = None,
+) -> Tuple[str, Dict[str, Any]]:
+    """
+    Compute vote metadata for weighted majority voting.
+
+    Args:
+        extracted_answers: Dictionary mapping model names to extracted answers
+        weights: Dictionary mapping model names to weights
+        tiebreaker: Optional tiebreaker answer (e.g., chairman's answer)
+
+    Returns:
+        Tuple of (winning_answer, metadata_dict) where metadata_dict contains:
+        - raw_answers: {model: raw_answer}
+        - normalized_answers: {model: normalized_answer_or_none}
+        - vote_counts: {normalized_answer: total_weight}
+        - is_tie: bool
+        - winning_answer: normalized winning answer
+        - tiebreaker_used: bool
+    """
+    # Build raw and normalized answer maps
+    raw_answers = {}
+    normalized_answers = {}
+
+    for model, answer in extracted_answers.items():
+        raw_answers[model] = answer
+        if answer is not None:
+            normalized_answers[model] = normalize_answer(answer)
+        else:
+            normalized_answers[model] = None
+
+    # Count weighted votes by normalized answer
+    vote_weights: Dict[str, float] = {}
+    for model, answer in extracted_answers.items():
+        if answer is None:
+            continue
+        norm = normalize_answer(answer)
+        weight = weights.get(model, 1.0)
+        vote_weights[norm] = vote_weights.get(norm, 0.0) + weight
+
+    if not vote_weights:
+        # No valid answers
+        return "", {
+            "raw_answers": raw_answers,
+            "normalized_answers": normalized_answers,
+            "vote_counts": {},
+            "is_tie": False,
+            "winning_answer": "",
+            "tiebreaker_used": False,
+        }
+
+    max_weight = max(vote_weights.values())
+    winners = [ans for ans, w in vote_weights.items() if w == max_weight]
+    is_tie = len(winners) > 1
+
+    # Determine winner
+    tiebreaker_used = False
+    if is_tie and tiebreaker:
+        norm_tiebreaker = normalize_answer(tiebreaker)
+        if norm_tiebreaker in winners:
+            winning_norm = norm_tiebreaker
+            tiebreaker_used = True
+        else:
+            winning_norm = sorted(winners)[0]
+    else:
+        winning_norm = sorted(winners)[0] if winners else ""
+
+    # Get original form of winning answer using weighted voting
+    models = list(extracted_answers.keys())
+    answers = [extracted_answers[m] for m in models]
+    valid_pairs = [(a, m) for a, m in zip(answers, models) if a is not None]
+
+    if valid_pairs:
+        valid_answers = [p[0] for p in valid_pairs]
+        valid_models = [p[1] for p in valid_pairs]
+        winning_answer = smart_weighted_majority_vote(
+            valid_answers, valid_models, weights, tiebreaker=tiebreaker
+        )
+    else:
+        winning_answer = ""
+
+    return winning_answer, {
+        "raw_answers": raw_answers,
+        "normalized_answers": normalized_answers,
+        "vote_counts": vote_weights,
+        "is_tie": is_tie,
+        "winning_answer": winning_norm,
+        "tiebreaker_used": tiebreaker_used,
+    }

@@ -289,3 +289,119 @@ class TestSmartMajorityVote:
         result = smart_majority_vote(["42", "42", "forty-two"])
         # Should fall back to normalized string matching
         assert result == "42"
+
+
+class TestComputeVoteMetadata:
+    """Tests for compute_vote_metadata function."""
+
+    def test_basic_metadata(self):
+        """Test basic vote metadata computation."""
+        from backend.governance.utils import compute_vote_metadata
+
+        extracted = {"m1": "4", "m2": "4", "m3": "5"}
+        winner, metadata = compute_vote_metadata(extracted)
+
+        assert winner == "4"
+        assert metadata["raw_answers"] == {"m1": "4", "m2": "4", "m3": "5"}
+        assert metadata["normalized_answers"] == {"m1": "4", "m2": "4", "m3": "5"}
+        assert metadata["vote_counts"]["4"] == 2
+        assert metadata["vote_counts"]["5"] == 1
+        assert metadata["is_tie"] is False
+        assert metadata["tiebreaker_used"] is False
+
+    def test_tie_detected(self):
+        """Test that ties are correctly detected."""
+        from backend.governance.utils import compute_vote_metadata
+
+        extracted = {"m1": "A", "m2": "B"}
+        winner, metadata = compute_vote_metadata(extracted)
+
+        assert metadata["is_tie"] is True
+        assert metadata["vote_counts"]["a"] == 1
+        assert metadata["vote_counts"]["b"] == 1
+
+    def test_tiebreaker_used(self):
+        """Test that tiebreaker usage is tracked."""
+        from backend.governance.utils import compute_vote_metadata
+
+        extracted = {"m1": "A", "m2": "B"}
+        winner, metadata = compute_vote_metadata(extracted, tiebreaker="B")
+
+        assert metadata["is_tie"] is True
+        assert metadata["tiebreaker_used"] is True
+        assert winner == "B"
+
+    def test_normalization_applied(self):
+        """Test that '4', '4.', and ' 4' normalize identically."""
+        from backend.governance.utils import compute_vote_metadata
+
+        extracted = {"m1": "4", "m2": "4.", "m3": " 4"}
+        winner, metadata = compute_vote_metadata(extracted)
+
+        # All should normalize to "4"
+        assert metadata["vote_counts"]["4"] == 3
+        assert metadata["is_tie"] is False
+
+    def test_none_answers_handled(self):
+        """Test handling of None answers."""
+        from backend.governance.utils import compute_vote_metadata
+
+        extracted = {"m1": "4", "m2": None, "m3": "4"}
+        winner, metadata = compute_vote_metadata(extracted)
+
+        assert winner == "4"
+        assert metadata["raw_answers"]["m2"] is None
+        assert metadata["normalized_answers"]["m2"] is None
+        assert metadata["vote_counts"]["4"] == 2
+
+    def test_empty_extracted_answers(self):
+        """Test handling of all None answers."""
+        from backend.governance.utils import compute_vote_metadata
+
+        extracted = {"m1": None, "m2": None}
+        winner, metadata = compute_vote_metadata(extracted)
+
+        assert winner == ""
+        assert metadata["vote_counts"] == {}
+        assert metadata["is_tie"] is False
+
+
+class TestComputeWeightedVoteMetadata:
+    """Tests for compute_weighted_vote_metadata function."""
+
+    def test_basic_weighted_metadata(self):
+        """Test basic weighted vote metadata computation."""
+        from backend.governance.utils import compute_weighted_vote_metadata
+
+        extracted = {"m1": "4", "m2": "4", "m3": "5"}
+        weights = {"m1": 1.0, "m2": 1.0, "m3": 1.0}
+        winner, metadata = compute_weighted_vote_metadata(extracted, weights)
+
+        assert winner == "4"
+        assert metadata["vote_counts"]["4"] == 2.0
+        assert metadata["vote_counts"]["5"] == 1.0
+        assert metadata["is_tie"] is False
+
+    def test_high_weight_wins(self):
+        """Test that higher weight can overcome count."""
+        from backend.governance.utils import compute_weighted_vote_metadata
+
+        extracted = {"m1": "4", "m2": "4", "m3": "5"}
+        weights = {"m1": 1.0, "m2": 1.0, "m3": 10.0}  # m3 has high weight
+        winner, metadata = compute_weighted_vote_metadata(extracted, weights)
+
+        assert winner == "5"
+        assert metadata["vote_counts"]["4"] == 2.0
+        assert metadata["vote_counts"]["5"] == 10.0
+
+    def test_weighted_tie(self):
+        """Test weighted tie detection."""
+        from backend.governance.utils import compute_weighted_vote_metadata
+
+        extracted = {"m1": "A", "m2": "B"}
+        weights = {"m1": 1.0, "m2": 1.0}
+        winner, metadata = compute_weighted_vote_metadata(extracted, weights)
+
+        assert metadata["is_tie"] is True
+        assert metadata["vote_counts"]["a"] == 1.0
+        assert metadata["vote_counts"]["b"] == 1.0

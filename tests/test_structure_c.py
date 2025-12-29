@@ -1,8 +1,9 @@
 """Tests for Structure C: Independent → Deliberate → Vote."""
 
+import importlib
 import pytest
 
-from backend.governance.structure_c import DeliberateVoteStructure
+from backend.governance import DeliberateVoteStructure
 
 
 @pytest.fixture
@@ -10,7 +11,7 @@ def mock_openrouter(monkeypatch):
     """Mock openrouter API calls for testing."""
     call_log = []
 
-    async def mock_query_model(model, messages):
+    async def mock_query_model(model, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "single", "model": model, "messages": messages})
         content = messages[-1]["content"]
 
@@ -30,7 +31,7 @@ def mock_openrouter(monkeypatch):
             else:
                 return {"content": "The answer is 4. FINAL ANSWER: 4"}
 
-    async def mock_query_models_parallel(models, messages):
+    async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "parallel", "models": models, "messages": messages})
         results = {}
         for i, model in enumerate(models):
@@ -40,10 +41,14 @@ def mock_openrouter(monkeypatch):
                 results[model] = {"content": f"{model}: I think 5. FINAL ANSWER: 5"}
         return results
 
-    import backend.governance.structure_c as struct_c_module
+    # Patch at actual implementation locations (use importlib to avoid namespace collision)
+    dv_module = importlib.import_module("backend.governance.deliberate_vote")
+    base_module = importlib.import_module("backend.governance.base")
 
-    monkeypatch.setattr(struct_c_module, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_c_module, "query_models_parallel", mock_query_models_parallel)
+    # query_model is used in both dv_module (deliberation) and base_module (chairman)
+    monkeypatch.setattr(dv_module, "query_model", mock_query_model)
+    monkeypatch.setattr(base_module, "query_model", mock_query_model)
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
 
     return call_log
 
@@ -53,7 +58,7 @@ def mock_openrouter_consensus(monkeypatch):
     """Mock where deliberation leads to consensus."""
     call_log = []
 
-    async def mock_query_model(model, messages):
+    async def mock_query_model(model, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "single", "model": model, "messages": messages})
         content = messages[-1]["content"]
 
@@ -63,7 +68,7 @@ def mock_openrouter_consensus(monkeypatch):
         else:
             return {"content": "Chairman says 42. FINAL ANSWER: 42"}
 
-    async def mock_query_models_parallel(models, messages):
+    async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "parallel", "models": models, "messages": messages})
         # Initial responses are different
         results = {}
@@ -71,10 +76,14 @@ def mock_openrouter_consensus(monkeypatch):
             results[model] = {"content": f"{model}: Answer is {40 + i}. FINAL ANSWER: {40 + i}"}
         return results
 
-    import backend.governance.structure_c as struct_c_module
+    # Patch at actual implementation locations (use importlib to avoid namespace collision)
+    dv_module = importlib.import_module("backend.governance.deliberate_vote")
+    base_module = importlib.import_module("backend.governance.base")
 
-    monkeypatch.setattr(struct_c_module, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_c_module, "query_models_parallel", mock_query_models_parallel)
+    # query_model is used in both dv_module (deliberation) and base_module (chairman)
+    monkeypatch.setattr(dv_module, "query_model", mock_query_model)
+    monkeypatch.setattr(base_module, "query_model", mock_query_model)
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
 
     return call_log
 
@@ -274,22 +283,26 @@ def test_extract_answers():
 @pytest.mark.asyncio
 async def test_structure_c_handles_no_valid_answers(monkeypatch):
     """Test handling when no deliberation responses have valid FINAL ANSWER."""
-    async def mock_query_model(model, messages):
+    async def mock_query_model(model, messages, temperature=0.0, timeout=None):
         content = messages[-1]["content"]
         if "previously answered" in content.lower():
             return {"content": "I'm not sure anymore..."}
         return {"content": "Chairman says 42. FINAL ANSWER: 42"}
 
-    async def mock_query_models_parallel(models, messages):
+    async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
         return {
             model: {"content": f"{model} rambles"}
             for model in models
         }
 
-    import backend.governance.structure_c as struct_c_module
+    # Patch at actual implementation locations (use importlib to avoid namespace collision)
+    dv_module = importlib.import_module("backend.governance.deliberate_vote")
+    base_module = importlib.import_module("backend.governance.base")
 
-    monkeypatch.setattr(struct_c_module, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_c_module, "query_models_parallel", mock_query_models_parallel)
+    # query_model is used in both dv_module (deliberation) and base_module (chairman)
+    monkeypatch.setattr(dv_module, "query_model", mock_query_model)
+    monkeypatch.setattr(base_module, "query_model", mock_query_model)
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
 
     structure = DeliberateVoteStructure(
         council_models=["model1", "model2"],
@@ -306,3 +319,38 @@ def test_structure_c_imports_from_package():
     from backend.governance import DeliberateVoteStructure
 
     assert DeliberateVoteStructure is not None
+
+
+@pytest.mark.asyncio
+async def test_structure_c_vote_metadata(mock_openrouter):
+    """Verify Stage 3 data includes comprehensive vote metadata."""
+    structure = DeliberateVoteStructure(
+        council_models=["model1", "model2", "model3"],
+        chairman_model="chairman",
+    )
+    result = await structure.run("What is 2+2?")
+
+    stage3 = result.stage3_data
+
+    # Check all vote metadata fields are present
+    assert "raw_answers" in stage3
+    assert "normalized_answers" in stage3
+    assert "vote_counts" in stage3
+    assert "is_tie" in stage3
+    assert "winning_answer" in stage3
+    assert "tiebreaker_used" in stage3
+
+    # Verify raw_answers has all models
+    assert len(stage3["raw_answers"]) == 3
+
+    # Verify normalized_answers has all models
+    assert len(stage3["normalized_answers"]) == 3
+
+    # Verify vote_counts is a dict
+    assert isinstance(stage3["vote_counts"], dict)
+
+    # Verify is_tie is boolean
+    assert isinstance(stage3["is_tie"], bool)
+
+    # Verify tiebreaker_used is boolean
+    assert isinstance(stage3["tiebreaker_used"], bool)
