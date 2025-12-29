@@ -323,6 +323,7 @@ async def run_pilot(
         DeliberateVoteStructure,
         IndependentRankSynthesize,
         MajorityVoteStructure,
+        SelfConsistencyVoteStructure,
         WeightedMajorityVote,
     )
 
@@ -333,6 +334,12 @@ async def run_pilot(
         DeliberateVoteStructure(COUNCIL_MODELS, CHAIRMAN_MODEL),
         DeliberateSynthesizeStructure(COUNCIL_MODELS, CHAIRMAN_MODEL),
         WeightedMajorityVote(COUNCIL_MODELS, CHAIRMAN_MODEL, weights_file=WEIGHTS_FILE),
+        # Self-consistency baseline: compute-matched single model sampling
+        SelfConsistencyVoteStructure(
+            base_model="google/gemini-2.0-flash-001",  # Best council model
+            n_samples=2 * len(COUNCIL_MODELS) + 1,  # Match 2N+1 call budget
+            temperature=0.7,
+        ),
     ]
 
     # Initialize benchmarks
