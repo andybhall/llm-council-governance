@@ -7,6 +7,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from experiments.analyze_deliberation_dynamics import (
+    analyze_deliberation_dynamics,
+    generate_dynamics_summary,
+)
 from experiments.run_pilot import load_results
 
 
@@ -1196,6 +1200,20 @@ def generate_report(
     else:
         lines.append("  (No deliberation data available)")
     lines.append("")
+
+    # Influence analysis from deliberation dynamics module
+    dynamics_analysis = analyze_deliberation_dynamics(df)
+    if dynamics_analysis and dynamics_analysis.get("most_influential"):
+        lines.append("  Influence patterns:")
+        lines.append("    Most influential (convinced others to change):")
+        for model, score in dynamics_analysis.get("most_influential", {}).items():
+            short_name = model.split("/")[-1] if "/" in model else model
+            lines.append(f"      {short_name}: {score:.1f} times")
+        lines.append("    Most influenced (changed to follow others):")
+        for model, score in dynamics_analysis.get("most_influenced", {}).items():
+            short_name = model.split("/")[-1] if "/" in model else model
+            lines.append(f"      {short_name}: {score:.1f} times")
+        lines.append("")
 
     # Timing summary
     if "elapsed_time" in df.columns:
