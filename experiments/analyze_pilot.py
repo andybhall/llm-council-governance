@@ -1101,6 +1101,39 @@ def generate_report(
         lines.append("  (scipy not available for pairwise tests)")
     lines.append("")
 
+    # Paired bootstrap comparisons
+    lines.append("PAIRED BOOTSTRAP COMPARISONS")
+    lines.append("-" * 40)
+    try:
+        from experiments.stats import run_pairwise_bootstrap_tests
+
+        # Use first structure as baseline (typically Structure A)
+        structures = df["structure"].unique().tolist()
+        if len(structures) >= 2:
+            baseline = structures[0]
+            boot_results = run_pairwise_bootstrap_tests(
+                df, baseline=baseline, n_boot=10000, seed=42
+            )
+            if not boot_results.empty:
+                baseline_short = baseline.replace("Independent → ", "")
+                lines.append(f"  Baseline: {baseline_short}")
+                lines.append("")
+                for _, row in boot_results.iterrows():
+                    struct_short = row["structure"].replace("Independent → ", "")
+                    ci_contains_zero = row["ci_low"] <= 0 <= row["ci_high"]
+                    sig = "" if ci_contains_zero else "*"
+                    lines.append(
+                        f"  {struct_short} vs baseline: {row['diff']:+.1%} "
+                        f"[{row['ci_low']:.1%}, {row['ci_high']:.1%}]{sig}"
+                    )
+            else:
+                lines.append("  Insufficient data for bootstrap tests")
+        else:
+            lines.append("  (Need at least 2 structures for comparison)")
+    except ImportError:
+        lines.append("  (experiments.stats module not available)")
+    lines.append("")
+
     # T-tests vs best individual model
     lines.append("T-TESTS: STRUCTURES VS BEST INDIVIDUAL MODEL")
     lines.append("-" * 40)
