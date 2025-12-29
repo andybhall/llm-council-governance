@@ -8,22 +8,37 @@ Karpathy proposed and built an "llm council" to advise a user. This raises an in
 
 ## Key Findings
 
-We ran 1,200 trials in the main pilot study plus additional experiments to explore what factors influence LLM council effectiveness. These findings are specific to our experimental setup: 7-9B parameter models, GSM8K and TruthfulQA benchmarks, and the particular prompts and structures tested.
+We ran 1,680 trials in the main pilot study plus additional experiments to explore what factors influence LLM council effectiveness. These findings are specific to our experimental setup: 7-9B parameter models, GSM8K and TruthfulQA benchmarks, and the particular prompts and structures tested.
 
 ### Overview
 
 | Configuration | Accuracy | vs Single Model |
 |---------------|----------|-----------------|
-| Single model (Gemma 2 9B) | 85.3% | — |
-| Same model + prompt diversity | 84.1% | -1.2% |
-| Same model + persona diversity | 83.0% | -2.3% |
-| Multi-model council (range) | 85.8–90.8% | +0.5% to +5.5% |
+| Single model (Gemma 2 9B) | 85.2% | — |
+| Same model + prompt diversity | 84.1% | -1.1% |
+| Same model + persona diversity | 83.0% | -2.2% |
+| Self-consistency baseline | 94.6% | +9.4% |
+| Multi-model council (range) | 85.8–90.8% | +0.6% to +5.6% |
 
-The top-performing council structure (Deliberate → Synthesize at 90.8%) showed a significant improvement over the single best model (p=0.0016). However, differences *between* structures were not statistically significant—all structures performed similarly within sampling error. Prompt and persona diversity did not appear to help.
+The top-performing approach was **Self-Consistency Vote** (94.6%), which samples a single strong model multiple times with temperature and takes a majority vote. This was significantly better than the Majority Vote baseline (+7.5%, 95% CI [1.7%, 13.8%]). Among multi-model councils, Deliberate → Synthesize performed best at 90.8%. Prompt and persona diversity did not appear to help.
 
-### Four Observations
+### Five Observations
 
-#### 1. Model diversity appeared more effective than prompt diversity
+#### 1. Self-consistency voting outperformed multi-model councils
+
+The strongest result was that sampling a single high-quality model (Gemini 2.0 Flash) 11 times with temperature 0.7 and taking a majority vote achieved 94.6% accuracy—significantly better than all multi-model council structures:
+
+| Approach | Accuracy | vs Majority Vote |
+|----------|----------|------------------|
+| Self-Consistency Vote | 94.6% | +7.5%* |
+| Deliberate → Synthesize | 90.8% | +3.8% |
+| Multi-model councils | 85.8–87.8% | baseline |
+
+*Statistically significant (95% CI [1.7%, 13.8%])*
+
+This suggests that for these benchmarks, the value may come from aggregating multiple samples rather than from model diversity per se. The self-consistency approach also had the fastest execution time (2.0s vs 19-32s for councils).
+
+#### 2. Model diversity appeared more effective than prompt diversity
 
 We tested whether a single model (Gemma 2 9B) with 4 different prompts could match a true multi-model council. In our experiments:
 
@@ -31,21 +46,23 @@ We tested whether a single model (Gemma 2 9B) with 4 different prompts could mat
 - **Persona variants**: 83.0% — no apparent improvement over baseline
 - **Different models**: 85.8–90.8% — improvement over baseline
 
-The best-performing council structure significantly outperformed the single best model (p=0.0016). This suggests that, at least for these particular prompts and benchmarks, whatever value councils provide may come from models trained on different data rather than from prompting the same model differently.
+This suggests that, at least for these particular prompts and benchmarks, whatever value councils provide may come from models trained on different data rather than from prompting the same model differently.
 
-#### 2. Deliberation appeared to help small models
+#### 3. Deliberation appeared to help small models
 
 For the 7-9B parameter models tested, letting council members see each other's answers before voting appeared to improve accuracy:
 
 | Structure | Accuracy | 95% CI |
 |-----------|----------|--------|
-| Deliberate → Synthesize | 90.8% | [85.7%, 93.8%] |
-| Deliberate → Vote | 87.8% | [81.8%, 90.9%] |
-| Rank → Synthesize | 87.4% | [82.6%, 91.5%] |
-| Majority Vote | 87.1% | [81.9%, 91.0%] |
-| Weighted Majority Vote | 85.8% | [81.5%, 90.7%] |
+| Self-Consistency Vote | 94.6% | [91.0%, 96.8%] |
+| Deliberate → Synthesize | 90.8% | [86.4%, 93.8%] |
+| Deliberate → Vote | 87.8% | [83.0%, 91.3%] |
+| Rank → Synthesize | 87.4% | [82.6%, 91.1%] |
+| Majority Vote | 87.1% | [82.2%, 90.7%] |
+| Agenda Setter + Veto | 86.3% | [81.3%, 90.1%] |
+| Weighted Majority Vote | 85.8% | [80.9%, 89.7%] |
 
-*Note: Differences between structures are not statistically significant (χ²=2.94, p=0.57). However, all structures outperformed the best individual model, with Deliberate → Synthesize reaching significance (p=0.0016).*
+*Note: Self-Consistency Vote was significantly better than Majority Vote (p<0.05). Differences between other structures were not statistically significant.*
 
 In our data, deliberation appeared to help because:
 - Agreement increased from 90.2% → 94.2% after deliberation
@@ -54,18 +71,18 @@ In our data, deliberation appeared to help because:
 
 This pattern might differ for frontier models, where deliberation could potentially introduce groupthink.
 
-#### 3. No clear winner between voting and synthesis
+#### 4. No clear winner between voting and synthesis
 
 In our experiments, synthesis-based and voting-based structures performed similarly:
 
 | Final Stage | Best Accuracy | 95% CI |
 |-------------|---------------|--------|
-| Chairman synthesis | 90.8% | [85.7%, 93.8%] |
-| Voting | 87.8% | [81.8%, 90.9%] |
+| Chairman synthesis | 90.8% | [86.4%, 93.8%] |
+| Voting | 87.8% | [83.0%, 91.3%] |
 
 The 3% difference is within sampling error. A well-prompted chairman can effectively synthesize council opinions, but we cannot conclude it's better than voting based on this data.
 
-#### 4. Weighted voting did not improve accuracy
+#### 5. Weighted voting did not improve accuracy
 
 We tested whether weighting votes by each model's historical accuracy would improve results. Each model's vote was weighted by its individual accuracy rate:
 
@@ -98,49 +115,56 @@ To properly test weighted voting, you would need either more model disagreement 
 
 | Question | Observation (in this experiment) |
 |----------|----------------------------------|
-| Do councils beat single models? | Yes, +5.5% for best structure (p=0.0016) |
+| Best approach tested? | Self-Consistency Vote (94.6%), significantly better than baseline |
+| Do multi-model councils beat single models? | Yes, +5.6% for best council structure |
 | Does deliberation help? | Appears to, for these small models |
 | Does prompt diversity help? | No, with these prompts |
 | Does persona diversity help? | No, with these personas |
 | Is voting or synthesis better? | No significant difference |
-| Best structure tested? | Unclear—all within sampling error |
+| Does agenda-setting help? | No, performed similar to baseline |
 
-*Notes: (1) Differences between structures were not statistically significant; ~210 trials per structure yields wide confidence intervals. (2) Weighted voting was also tested but proved uninformative due to high model agreement.*
+*Notes: (1) Self-Consistency Vote was significantly better than Majority Vote baseline. (2) Differences between multi-model council structures were not statistically significant. (3) Weighted voting was also tested but proved uninformative due to high model agreement.*
 
 ---
 
 ## Experimental Details
 
-### The Five Governance Structures
+### The Seven Governance Structures
 
 | Structure | Stage 1 | Stage 2 | Stage 3 |
 |-----------|---------|---------|---------|
-| **A: Rank→Synthesize** | 4 models answer independently | Each model ranks all answers | Chairman synthesizes based on rankings |
-| **B: Majority Vote** | 4 models answer independently | — | Take majority vote (equal weights) |
-| **C: Deliberate→Vote** | 4 models answer independently | Each model sees others' answers, can revise | Take majority vote |
-| **D: Deliberate→Synthesize** | 4 models answer independently | Each model sees others' answers, can revise | Chairman synthesizes |
-| **E: Weighted Vote** | 4 models answer independently | — | Take weighted majority vote (by accuracy) |
+| **Rank→Synthesize** | 4 models answer independently | Each model ranks all answers | Chairman synthesizes based on rankings |
+| **Majority Vote** | 4 models answer independently | — | Take majority vote (equal weights) |
+| **Deliberate→Vote** | 4 models answer independently | Each model sees others' answers, can revise | Take majority vote |
+| **Deliberate→Synthesize** | 4 models answer independently | Each model sees others' answers, can revise | Chairman synthesizes |
+| **Weighted Vote** | 4 models answer independently | — | Take weighted majority vote (by accuracy) |
+| **Self-Consistency Vote** | Single model sampled 11× with temp=0.7 | — | Take majority vote across samples |
+| **Agenda Setter + Veto** | 4 models answer independently | Chairman proposes answer | Council votes ACCEPT/VETO; fallback to majority if vetoed |
 
 ### Models Tested
 
 | Model | Overall | GSM8K | TruthfulQA |
 |-------|---------|-------|------------|
-| Gemma 2 9B | 85.3% | 86.7% | 84.0% |
-| Qwen 2.5 7B | 83.9% | 90.9% | 77.0% |
-| Llama 3.1 8B | 82.6% | 82.0% | 83.1% |
-| Mistral 7B | 71.1% | 63.2% | 79.0% |
+| Gemma 2 9B | 85.2% | 87.0% | 83.4% |
+| Qwen 2.5 7B | 83.8% | 90.8% | 76.7% |
+| Llama 3.1 8B | 83.0% | 82.1% | 83.8% |
+| Mistral 7B | 71.4% | 62.8% | 79.8% |
+
+*Self-Consistency Vote uses Gemini 2.0 Flash as the base model.*
 
 ### Council Performance by Benchmark
 
 | Structure | GSM8K | TruthfulQA | Overall |
 |-----------|-------|------------|---------|
+| Self-Consistency Vote | 96.7% | 92.5% | 94.6% |
 | Deliberate → Synthesize | 92.4% | 89.2% | 90.8% |
 | Deliberate → Vote | 91.5% | 84.0% | 87.8% |
 | Rank → Synthesize | 88.2% | 86.7% | 87.4% |
 | Majority Vote | 88.3% | 85.8% | 87.1% |
+| Agenda Setter + Veto | 84.3% | 88.2% | 86.3% |
 | Weighted Majority Vote | 85.8% | 85.8% | 85.8% |
 
-*Based on 1,194 valid trials across 5 structures (1,200 total, 6 errors).*
+*Based on 1,668 valid trials across 7 structures (1,680 total, 12 errors).*
 
 ### Deliberation Behavior
 
@@ -159,6 +183,18 @@ Models changed their answers after seeing others' responses:
 | Gemma 2 9B | 12.1% | 47.9% | 4.0% |
 | Qwen 2.5 7B | 10.9% | 39.5% | 5.0% |
 | Mistral 7B | 10.1% | 47.6% | 4.3% |
+
+### Influence Patterns
+
+During deliberation, some models were more influential than others:
+
+| Most Influential (convinced others) | Most Influenced (followed others) |
+|-------------------------------------|-----------------------------------|
+| Gemma 2 9B: 119.7× | Mistral 7B: 162.0× |
+| Llama 3.1 8B: 109.7× | Gemma 2 9B: 84.0× |
+| Qwen 2.5 7B: 107.5× | Qwen 2.5 7B: 77.0× |
+
+Mistral 7B (the weakest model) was most likely to change its answer to match others, while Gemma 2 9B (the strongest) was most likely to convince others.
 
 ---
 
@@ -286,29 +322,28 @@ USE_CHEAP_MODELS=false
 ├── backend/
 │   ├── config.py              # Model and API configuration
 │   ├── openrouter.py          # OpenRouter API client
-│   ├── prompt_variants.py     # Prompt diversity experiment
-│   ├── persona_variants.py    # Persona diversity experiment
 │   ├── governance/
 │   │   ├── base.py            # GovernanceStructure ABC
 │   │   ├── utils.py           # Answer extraction, voting
 │   │   ├── voting.py          # Voting strategy implementations
-│   │   ├── independent_rank_synthesize.py  # Structure A
-│   │   ├── structure_b.py     # Majority Vote
-│   │   ├── structure_c.py     # Deliberate → Vote
-│   │   ├── structure_d.py     # Deliberate → Synthesize
-│   │   └── structure_e.py     # Weighted Majority Vote
+│   │   ├── independent_rank_synthesize.py  # Rank → Synthesize
+│   │   ├── majority_vote.py   # Majority Vote
+│   │   ├── deliberate_vote.py # Deliberate → Vote
+│   │   ├── deliberate_synthesize.py  # Deliberate → Synthesize
+│   │   ├── weighted_vote.py   # Weighted Majority Vote
+│   │   ├── self_consistency_vote.py  # Self-Consistency Vote
+│   │   └── agenda_veto.py     # Agenda Setter + Veto
 │   └── evaluation/
 │       ├── base.py            # Benchmark ABC
 │       ├── gsm8k.py           # Math reasoning benchmark
 │       └── truthfulqa.py      # Factual accuracy benchmark
 ├── experiments/
 │   ├── run_pilot.py           # Main experiment runner
-│   ├── run_prompt_experiment.py
-│   ├── run_persona_experiment.py
-│   ├── run_voting_comparison.py  # Voting strategy comparison
-│   ├── analyze_*.py           # Analysis scripts
+│   ├── analyze_pilot.py       # Results analysis
+│   ├── analyze_deliberation_dynamics.py  # Mind-change analysis
+│   ├── stats.py               # Paired bootstrap statistics
 │   └── results/               # Output data and charts
-├── tests/                     # Test suite (405 tests)
+├── tests/                     # Test suite (485 tests)
 └── scripts/
     └── check_setup.py         # Setup verification
 ```
@@ -326,10 +361,10 @@ pytest tests/ -v
 
 ## Limitations
 
-- Results are specific to the 7-9B parameter models tested
+- Results are specific to the 7-9B parameter models tested (plus Gemini 2.0 Flash for self-consistency)
 - Only two benchmarks were used (GSM8K, TruthfulQA)
 - Prompt and persona designs represent a small sample of possible approaches
-- Statistical significance was not achieved for structure comparisons
+- Self-consistency used a different (stronger) base model than the council, so the comparison is not perfectly controlled
 - Results may not generalize to frontier models or other domains
 
 ## License
