@@ -84,20 +84,23 @@ async def run_single_trial(
 
 def create_variant_patches():
     """Create patches to use variant-aware query functions in all governance structures."""
-    import backend.governance.independent_rank_synthesize as struct_a
-    import backend.governance.structure_b as struct_b
-    import backend.governance.structure_c as struct_c
-    import backend.governance.structure_d as struct_d
+    import importlib
+
+    # Use importlib to avoid namespace collision with majority_vote function
+    base_module = importlib.import_module("backend.governance.base")
+    struct_a = importlib.import_module("backend.governance.independent_rank_synthesize")
+    struct_c = importlib.import_module("backend.governance.deliberate_vote")
+    struct_d = importlib.import_module("backend.governance.deliberate_synthesize")
 
     return [
-        patch.object(struct_a, "query_model", query_model_with_variants),
-        patch.object(struct_a, "query_models_parallel", query_models_parallel_with_variants),
-        patch.object(struct_b, "query_model", query_model_with_variants),
-        patch.object(struct_b, "query_models_parallel", query_models_parallel_with_variants),
-        patch.object(struct_c, "query_model", query_model_with_variants),
-        patch.object(struct_c, "query_models_parallel", query_models_parallel_with_variants),
-        patch.object(struct_d, "query_model", query_model_with_variants),
-        patch.object(struct_d, "query_models_parallel", query_models_parallel_with_variants),
+        # Base class has both query_model (chairman) and query_models_parallel (Stage 1)
+        patch.object(base_module, "query_model", query_model_with_variants),
+        patch.object(base_module, "query_models_parallel", query_models_parallel_with_variants),
+        # These structures still import query_model directly for their specific stages
+        patch.object(struct_a, "query_model", query_model_with_variants),  # synthesis
+        patch.object(struct_a, "query_models_parallel", query_models_parallel_with_variants),  # Stage 2 rankings
+        patch.object(struct_c, "query_model", query_model_with_variants),  # deliberation
+        patch.object(struct_d, "query_model", query_model_with_variants),  # deliberation
     ]
 
 

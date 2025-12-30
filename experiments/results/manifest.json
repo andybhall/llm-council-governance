@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-12-29T16:08:36.614925",
+  "git": {
+    "sha": "908e6c510069e14c634cad2c15002917c52cce33",
+    "dirty": true
+  },
+  "environment": {
+    "python_version": "3.13.7 (v3.13.7:bcee1c32211, Aug 14 2025, 19:10:51) [Clang 16.0.0 (clang-1600.0.26.6)]",
+    "platform": "darwin",
+    "hostname": "Andrews-MacBook-Pro-3.local"
+  },
+  "packages": {
+    "httpx": "0.28.1",
+    "datasets": "4.4.2",
+    "pandas": "2.3.3",
+    "scipy": "1.16.3",
+    "tenacity": "9.1.2",
+    "matplotlib": "3.10.7"
+  },
+  "config": {
+    "structures": [
+      "Independent \u2192 Rank \u2192 Synthesize",
+      "Independent \u2192 Majority Vote",
+      "Independent \u2192 Deliberate \u2192 Vote",
+      "Independent \u2192 Deliberate \u2192 Synthesize",
+      "Independent \u2192 Weighted Majority Vote",
+      "Self-Consistency Vote",
+      "Agenda Setter + Veto"
+    ],
+    "benchmarks": [
+      "GSM8K",
+      "TruthfulQA"
+    ],
+    "n_questions": 40,
+    "n_replications": 3,
+    "temperature": 0.0
+  },
+  "random_seeds": {}
+}

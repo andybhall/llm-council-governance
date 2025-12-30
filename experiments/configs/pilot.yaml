@@ -1,0 +1,36 @@
+# Pilot Study Configuration
+# Run with: python -m experiments run --config experiments/configs/pilot.yaml
+
+experiment:
+  name: "pilot_study"
+  description: "Main pilot study comparing 5 governance structures"
+
+models:
+  council:
+    - "meta-llama/llama-3.1-8b-instruct"
+    - "mistralai/mistral-7b-instruct"
+    - "google/gemma-2-9b-it"
+    - "qwen/qwen-2.5-7b-instruct"
+  chairman: "meta-llama/llama-3.1-8b-instruct"
+
+benchmarks:
+  - name: "gsm8k"
+    n_questions: 40
+  - name: "truthfulqa"
+    n_questions: 40
+
+structures:
+  - "rank_synthesize"      # Structure A
+  - "majority_vote"        # Structure B
+  - "deliberate_vote"      # Structure C
+  - "deliberate_synthesize" # Structure D
+  - "weighted_vote"        # Structure E
+
+settings:
+  n_replications: 3
+  temperature: 0.0
+  timeout: 60.0
+
+output:
+  dir: "experiments/results"
+  save_interval: 1

@@ -84,6 +84,44 @@ def apply_voting_strategies_to_trial(
     return results
 
 
+def extract_number(text: str) -> Optional[str]:
+    """Extract a numeric answer from text, handling common formats."""
+    import re
+    if not text:
+        return None
+
+    # Normalize: remove $ and commas, handle ** markdown
+    text = text.replace("**", "").strip()
+
+    # Try to find a number (handles $18, 18, 18.5, -18, etc.)
+    # Look for patterns like $123, 123, 123.45, -123
+    match = re.search(r'\$?\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)', text)
+    if match:
+        # Normalize: remove commas
+        return match.group(1).replace(",", "")
+    return None
+
+
+def extract_letter(text: str) -> Optional[str]:
+    """Extract a letter answer (A, B, C, etc.) from text."""
+    import re
+    if not text:
+        return None
+
+    text = text.strip().upper()
+
+    # Look for standalone letter
+    match = re.search(r'\b([A-Z])\b', text)
+    if match:
+        return match.group(1)
+
+    # Just return first char if it's a letter
+    if text and text[0].isalpha():
+        return text[0]
+
+    return None
+
+
 def evaluate_answer(
     predicted: str,
     expected: str,
@@ -91,6 +129,8 @@ def evaluate_answer(
 ) -> bool:
     """
     Evaluate if predicted answer matches expected.
+
+    Uses proper extraction logic matching the benchmark evaluators.
 
     Args:
         predicted: Predicted answer string
@@ -104,16 +144,26 @@ def evaluate_answer(
         return False
 
     if benchmark == "GSM8K":
-        # Numeric comparison
+        # Numeric comparison with proper extraction
+        pred_num = extract_number(predicted)
+        exp_num = extract_number(expected)
+
+        if pred_num is None or exp_num is None:
+            return False
+
         try:
-            pred_val = float(predicted.replace(",", "").replace("$", ""))
-            exp_val = float(expected.replace(",", "").replace("$", ""))
-            return pred_val == exp_val
+            return float(pred_num) == float(exp_num)
         except ValueError:
-            return predicted.strip() == expected.strip()
+            return False
     else:
         # Letter comparison (TruthfulQA)
-        return predicted.strip().upper() == expected.strip().upper()
+        pred_letter = extract_letter(predicted)
+        exp_letter = extract_letter(expected)
+
+        if pred_letter is None or exp_letter is None:
+            return False
+
+        return pred_letter == exp_letter
 
 
 def reanalyze_pilot(
@@ -155,11 +205,14 @@ def reanalyze_pilot(
     reanalysis_results = []
 
     for trial in trials:
-        # Apply all strategies
+        # Get chairman tiebreaker from original trial (for fair comparison)
+        chairman_answer = trial.get("stage3_data", {}).get("chairman_tiebreaker")
+
+        # Apply all strategies with same tiebreaker
         voting_results = apply_voting_strategies_to_trial(
             trial,
             strategies,
-            chairman_answer=None,  # Use first valid answer as implicit tiebreaker
+            chairman_answer=chairman_answer,
         )
 
         # Evaluate each strategy
