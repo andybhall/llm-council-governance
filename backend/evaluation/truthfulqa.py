@@ -1,5 +1,6 @@
 """TruthfulQA benchmark loader and evaluator."""
 
+import hashlib
 import random
 import re
 from typing import List, Optional, Tuple
@@ -143,9 +144,10 @@ class TruthfulQABenchmark(Benchmark):
         # Get the best incorrect answer (first one in the list)
         best_incorrect = incorrect_answers[0] if incorrect_answers else ""
 
-        # Use question hash as seed for reproducibility
+        # Use deterministic hash for reproducibility across Python sessions
+        # (Python's built-in hash() is randomized per PEP 456)
         if seed is None:
-            seed = hash(question) % (2**32)
+            seed = int(hashlib.sha256(question.encode()).hexdigest()[:8], 16)
 
         rng = random.Random(seed)
 
