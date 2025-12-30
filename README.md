@@ -196,6 +196,23 @@ During deliberation, some models were more influential than others:
 
 Mistral 7B (the weakest model) was most likely to change its answer to match others, while Gemma 2 9B (the strongest) was most likely to convince others.
 
+### When Governance Matters: Disagreement-Conditioned Accuracy
+
+Governance structures matter most when council members initially disagree. When all models agree in stage 1, accuracy is ~97-100% regardless of structure. The differences emerge under disagreement:
+
+| Structure | Overall | When Disagree | When Agree |
+|-----------|---------|---------------|------------|
+| Deliberate → Synthesize | 90.8% | **88.6%** | 96.8% |
+| Rank → Synthesize | 87.4% | 84.5% | 96.6% |
+| Deliberate → Vote | 87.8% | 84.2% | 98.3% |
+| Majority Vote | 87.1% | 83.3% | 98.3% |
+| Agenda Setter + Veto | 86.3% | 81.8% | 100.0% |
+| Weighted Majority Vote | 85.8% | 81.6% | 98.4% |
+
+*Stage-1 disagreement occurred in 75% of trials. Self-consistency excluded (single model).*
+
+This supports a key insight from political economy: **institutions matter most under conflict or uncertainty**. When there's consensus, any reasonable aggregation method works. The value of deliberation and synthesis emerges precisely when models disagree—and Deliberate → Synthesize handles these cases best (+5.3% over Majority Vote under disagreement).
+
 ---
 
 ## Prompt & Persona Experiments
@@ -219,13 +236,15 @@ Four reasoning-style prompts were prepended to each question:
 > Think of similar problems you've seen before. What patterns or approaches worked for those? Apply those insights to solve this problem.
 
 **Results by Structure:**
-| Structure | Accuracy | vs Baseline |
-|-----------|----------|-------------|
-| Rank → Synthesize | 86.2% | +1.8% |
-| Deliberate → Vote | 86.1% | +1.6% |
-| Majority Vote | 85.4% | +0.9% |
-| Deliberate → Synthesize | 78.6% | -5.9% |
-| **Overall** | **84.1%** | **-0.4%** |
+| Structure | Accuracy |
+|-----------|----------|
+| Rank → Synthesize | 86.2% |
+| Deliberate → Vote | 86.1% |
+| Majority Vote | 85.4% |
+| Deliberate → Synthesize | 78.6% |
+| **Overall** | **84.1%** |
+
+*Baseline for this experiment: single Gemma 2 9B without prompt variants (84.5%).*
 
 ### Persona Variants Tested
 
@@ -244,17 +263,19 @@ Four character personas were prepended to each question:
 > You are an enthusiastic teacher who loves making things crystal clear. You believe any problem can be solved if you break it down carefully enough. You explain your reasoning as if teaching a student, making each step explicit. You use concrete examples when helpful and always double-check your work before giving a final answer.
 
 **Results by Structure:**
-| Structure | Accuracy | vs Baseline |
-|-----------|----------|-------------|
-| Majority Vote | 85.7% | +1.2% |
-| Deliberate → Vote | 85.2% | +0.7% |
-| Rank → Synthesize | 84.0% | -0.5% |
-| Deliberate → Synthesize | 77.0% | -7.5% |
-| **Overall** | **83.0%** | **-1.5%** |
+| Structure | Accuracy |
+|-----------|----------|
+| Majority Vote | 85.7% |
+| Deliberate → Vote | 85.2% |
+| Rank → Synthesize | 84.0% |
+| Deliberate → Synthesize | 77.0% |
+| **Overall** | **83.0%** |
+
+*Baseline for this experiment: single Gemma 2 9B without persona variants (84.5%).*
 
 ### Interpretation
 
-Neither prompt nor persona diversity appeared to improve over the single-model baseline in our experiments. However, this does not rule out the possibility that other prompt designs, more distinctive personas, or different base models might yield different results. The prompts and personas tested here represent only a small sample of possible approaches.
+Neither prompt nor persona diversity improved over the single-model baseline in these experiments. The overall accuracy (84.1% for prompts, 83.0% for personas) was comparable to or slightly below the baseline Gemma 2 9B performance (84.5%). This does not rule out the possibility that other prompt designs, more distinctive personas, or different base models might yield different results.
 
 ---
 
@@ -350,8 +371,18 @@ USE_CHEAP_MODELS=false
 
 ## Benchmarks
 
-- **GSM8K**: Grade school math word problems
+- **GSM8K**: Grade school math word problems (numerical answers, exact match evaluation)
 - **TruthfulQA**: Factual questions testing resistance to common misconceptions
+
+### TruthfulQA Evaluation Details
+
+We use the improved binary format recommended by the TruthfulQA authors ([reference](https://www.alignmentforum.org/posts/Bunfwz6JsNd44kgLT/new-improved-multiple-choice-truthfulqa)):
+
+- **Format**: Binary A/B choice (best correct answer vs. best incorrect answer)
+- **Randomization**: Answer order is randomized per question using a deterministic hash, preventing position bias
+- **Scoring**: Exact letter match (A or B)
+
+This differs from the original MC1/MC2 formats which had 4-10 options in fixed order and were susceptible to position bias.
 
 ## Running Tests
 
