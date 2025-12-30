@@ -139,7 +139,7 @@ def mock_openrouter(monkeypatch):
     """Mock OpenRouter API calls for all governance structures."""
     call_count = {"count": 0}
 
-    async def mock_query_model(model: str, messages: List[Dict]) -> Dict:
+    async def mock_query_model(model: str, messages: List[Dict], temperature: float = 0.0, timeout=None) -> Dict:
         """Return appropriate mock responses based on context."""
         call_count["count"] += 1
         prompt = messages[-1]["content"] if messages else ""
@@ -185,7 +185,7 @@ def mock_openrouter(monkeypatch):
             return {"content": f"Response from {model}. FINAL ANSWER: 42"}
 
     async def mock_query_models_parallel(
-        models: List[str], messages: List[Dict]
+        models: List[str], messages: List[Dict], temperature: float = 0.0, timeout=None
     ) -> Dict[str, Dict]:
         """Mock parallel queries."""
         results = {}
@@ -193,20 +193,22 @@ def mock_openrouter(monkeypatch):
             results[model] = await mock_query_model(model, messages)
         return results
 
-    # Patch all governance structure modules
-    import backend.governance.independent_rank_synthesize as struct_a
-    import backend.governance.structure_b as struct_b
-    import backend.governance.structure_c as struct_c
-    import backend.governance.structure_d as struct_d
+    # Patch all governance structure modules (use importlib to avoid namespace collisions)
+    import importlib
+    base_module = importlib.import_module("backend.governance.base")
+    struct_a = importlib.import_module("backend.governance.independent_rank_synthesize")
+    struct_c = importlib.import_module("backend.governance.deliberate_vote")
+    struct_d = importlib.import_module("backend.governance.deliberate_synthesize")
 
-    monkeypatch.setattr(struct_a, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_a, "query_models_parallel", mock_query_models_parallel)
-    monkeypatch.setattr(struct_b, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_b, "query_models_parallel", mock_query_models_parallel)
-    monkeypatch.setattr(struct_c, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_c, "query_models_parallel", mock_query_models_parallel)
-    monkeypatch.setattr(struct_d, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_d, "query_models_parallel", mock_query_models_parallel)
+    # Base class has both query_model (for chairman) and query_models_parallel (for Stage 1)
+    monkeypatch.setattr(base_module, "query_model", mock_query_model)
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
+
+    # These structures still import query_model directly for their specific stages
+    monkeypatch.setattr(struct_a, "query_model", mock_query_model)  # synthesis
+    monkeypatch.setattr(struct_a, "query_models_parallel", mock_query_models_parallel)  # Stage 2 rankings
+    monkeypatch.setattr(struct_c, "query_model", mock_query_model)  # deliberation
+    monkeypatch.setattr(struct_d, "query_model", mock_query_model)  # deliberation
 
     return call_count
 

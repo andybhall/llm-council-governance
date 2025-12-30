@@ -81,9 +81,12 @@ class TestCreatePersonaPatches:
         """Verify patches are created for all governance structures."""
         patches = create_persona_patches()
 
-        # Should have 2 patches per structure (query_model + query_models_parallel)
-        # For 4 structures (A, B, C, D): 8 patches
-        assert len(patches) == 8
+        # Should have:
+        # - 1 base class patch for query_models_parallel (Stage 1)
+        # - 1 struct_a query_model + 1 struct_a query_models_parallel (Stage 2)
+        # - 1 query_model patch for each of B, C, D
+        # Total: 6 patches
+        assert len(patches) == 6
 
     def test_patches_are_applicable(self):
         """Verify patches can be started and stopped."""

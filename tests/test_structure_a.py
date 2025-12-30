@@ -1,5 +1,6 @@
 """Tests for Structure A: Independent → Rank → Synthesize."""
 
+import importlib
 import pytest
 
 from backend.governance.independent_rank_synthesize import IndependentRankSynthesize
@@ -10,7 +11,7 @@ def mock_openrouter(monkeypatch):
     """Mock openrouter API calls for testing."""
     call_log = []
 
-    async def mock_query_model(model, messages):
+    async def mock_query_model(model, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "single", "model": model, "messages": messages})
         content = messages[-1]["content"]
 
@@ -25,7 +26,7 @@ def mock_openrouter(monkeypatch):
             # Stage 1: initial response
             return {"content": f"Response from {model}: The answer is 4. FINAL ANSWER: 4"}
 
-    async def mock_query_models_parallel(models, messages):
+    async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "parallel", "models": models, "messages": messages})
         content = messages[-1]["content"]
 
@@ -45,14 +46,14 @@ def mock_openrouter(monkeypatch):
                 }
         return results
 
-    from backend.governance import independent_rank_synthesize
+    # Patch at actual implementation locations (use importlib to avoid namespace collision)
+    struct_a = importlib.import_module("backend.governance.independent_rank_synthesize")
+    base_module = importlib.import_module("backend.governance.base")
 
-    monkeypatch.setattr(
-        independent_rank_synthesize, "query_model", mock_query_model
-    )
-    monkeypatch.setattr(
-        independent_rank_synthesize, "query_models_parallel", mock_query_models_parallel
-    )
+    monkeypatch.setattr(struct_a, "query_model", mock_query_model)
+    # query_models_parallel is used in both base class (Stage 1) and struct_a (Stage 2)
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
+    monkeypatch.setattr(struct_a, "query_models_parallel", mock_query_models_parallel)
 
     return call_log
 

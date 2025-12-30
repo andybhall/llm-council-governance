@@ -1,8 +1,9 @@
 """Tests for Structure D: Independent → Deliberate → Synthesize."""
 
+import importlib
 import pytest
 
-from backend.governance.structure_d import DeliberateSynthesizeStructure
+from backend.governance import DeliberateSynthesizeStructure
 
 
 @pytest.fixture
@@ -10,7 +11,7 @@ def mock_openrouter(monkeypatch):
     """Mock openrouter API calls for testing."""
     call_log = []
 
-    async def mock_query_model(model, messages):
+    async def mock_query_model(model, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "single", "model": model, "messages": messages})
         content = messages[-1]["content"]
 
@@ -29,7 +30,7 @@ def mock_openrouter(monkeypatch):
             # Stage 1 or other
             return {"content": f"{model} initial: The answer is 4. FINAL ANSWER: 4"}
 
-    async def mock_query_models_parallel(models, messages):
+    async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
         call_log.append({"type": "parallel", "models": models, "messages": messages})
         results = {}
         for i, model in enumerate(models):
@@ -39,10 +40,13 @@ def mock_openrouter(monkeypatch):
             }
         return results
 
-    import backend.governance.structure_d as struct_d_module
+    # Patch at actual implementation locations (use importlib to avoid namespace collision)
+    ds_module = importlib.import_module("backend.governance.deliberate_synthesize")
+    base_module = importlib.import_module("backend.governance.base")
 
-    monkeypatch.setattr(struct_d_module, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_d_module, "query_models_parallel", mock_query_models_parallel)
+    monkeypatch.setattr(ds_module, "query_model", mock_query_model)
+    # query_models_parallel is now in base class for Stage 1
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
 
     return call_log
 
@@ -232,17 +236,20 @@ async def test_structure_d_synthesis_uses_both_stages(monkeypatch):
     """Verify synthesis prompt includes both initial and deliberated responses."""
     captured_prompts = []
 
-    async def mock_query_model(model, messages):
+    async def mock_query_model(model, messages, temperature=0.0, timeout=None):
         captured_prompts.append(messages[-1]["content"])
         return {"content": "Synthesis result. FINAL ANSWER: 42"}
 
-    async def mock_query_models_parallel(models, messages):
+    async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
         return {m: {"content": f"{m} response"} for m in models}
 
-    import backend.governance.structure_d as struct_d_module
+    # Patch at actual implementation locations (use importlib to avoid namespace collision)
+    ds_module = importlib.import_module("backend.governance.deliberate_synthesize")
+    base_module = importlib.import_module("backend.governance.base")
 
-    monkeypatch.setattr(struct_d_module, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_d_module, "query_models_parallel", mock_query_models_parallel)
+    monkeypatch.setattr(ds_module, "query_model", mock_query_model)
+    # query_models_parallel is now in base class for Stage 1
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
 
     structure = DeliberateSynthesizeStructure(
         council_models=["model1", "model2"],
@@ -259,20 +266,23 @@ async def test_structure_d_synthesis_uses_both_stages(monkeypatch):
 @pytest.mark.asyncio
 async def test_structure_d_handles_synthesis_without_final_answer(monkeypatch):
     """Test fallback when synthesis doesn't have FINAL ANSWER."""
-    async def mock_query_model(model, messages):
+    async def mock_query_model(model, messages, temperature=0.0, timeout=None):
         content = messages[-1]["content"]
         if "chairman" in content.lower():
             # Synthesis without FINAL ANSWER pattern
             return {"content": "The best answer based on deliberation is forty-two."}
         return {"content": "Model response. FINAL ANSWER: 4"}
 
-    async def mock_query_models_parallel(models, messages):
+    async def mock_query_models_parallel(models, messages, temperature=0.0, timeout=None):
         return {m: {"content": f"{m}: FINAL ANSWER: 4"} for m in models}
 
-    import backend.governance.structure_d as struct_d_module
+    # Patch at actual implementation locations (use importlib to avoid namespace collision)
+    ds_module = importlib.import_module("backend.governance.deliberate_synthesize")
+    base_module = importlib.import_module("backend.governance.base")
 
-    monkeypatch.setattr(struct_d_module, "query_model", mock_query_model)
-    monkeypatch.setattr(struct_d_module, "query_models_parallel", mock_query_models_parallel)
+    monkeypatch.setattr(ds_module, "query_model", mock_query_model)
+    # query_models_parallel is now in base class for Stage 1
+    monkeypatch.setattr(base_module, "query_models_parallel", mock_query_models_parallel)
 
     structure = DeliberateSynthesizeStructure(
         council_models=["model1", "model2"],

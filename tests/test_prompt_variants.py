@@ -138,11 +138,12 @@ class TestQueryModelWithVariants:
         """Mock the original query_model function."""
         call_log = []
 
-        async def mock_fn(model, messages):
+        async def mock_fn(model, messages, temperature=0.0, timeout=None):
             call_log.append({"model": model, "messages": messages})
             return {"content": "Test response. FINAL ANSWER: 42"}
 
-        import backend.prompt_variants as pv
+        # Patch at the actual implementation location
+        import experiments.assets.prompt_variants as pv
         monkeypatch.setattr(pv, "original_query_model", mock_fn)
 
         return call_log
@@ -204,11 +205,12 @@ class TestQueryModelsParallelWithVariants:
         """Mock the original query_model function."""
         call_log = []
 
-        async def mock_fn(model, messages):
+        async def mock_fn(model, messages, temperature=0.0, timeout=None):
             call_log.append({"model": model, "messages": messages})
             return {"content": f"Response from {model}. FINAL ANSWER: 42"}
 
-        import backend.prompt_variants as pv
+        # Patch at the actual implementation location
+        import experiments.assets.prompt_variants as pv
         monkeypatch.setattr(pv, "original_query_model", mock_fn)
 
         return call_log
@@ -262,10 +264,11 @@ class TestQueryModelsParallelWithVariants:
     @pytest.mark.asyncio
     async def test_handles_exceptions(self, monkeypatch):
         """Should handle exceptions gracefully."""
-        async def failing_query(model, messages):
+        async def failing_query(model, messages, temperature=0.0, timeout=None):
             raise Exception("API Error")
 
-        import backend.prompt_variants as pv
+        # Patch at the actual implementation location
+        import experiments.assets.prompt_variants as pv
         monkeypatch.setattr(pv, "original_query_model", failing_query)
 
         messages = [{"role": "user", "content": "Test"}]
@@ -285,32 +288,35 @@ class TestIntegrationWithGovernanceStructures:
     @pytest.mark.asyncio
     async def test_structure_b_with_variants(self, monkeypatch):
         """Test MajorityVoteStructure works with variant models."""
+        import importlib
+
         call_log = []
 
-        async def mock_query(model, messages):
+        async def mock_query(model, messages, temperature=0.0, timeout=None):
             call_log.append({"model": model})
             return {"content": "Response. FINAL ANSWER: 42"}
 
-        async def mock_parallel(models, messages):
+        async def mock_parallel(models, messages, temperature=0.0, timeout=None):
             results = {}
             for model in models:
                 results[model] = await mock_query(model, messages)
             return results
 
-        # Patch at the prompt_variants level
-        import backend.prompt_variants as pv
+        # Patch at the actual implementation location
+        import experiments.assets.prompt_variants as pv
         monkeypatch.setattr(pv, "original_query_model", mock_query)
 
-        # Patch the structure's query functions
-        import backend.governance.structure_b as struct_b
+        # Patch the structure's query functions (use importlib to avoid namespace collision)
+        base_module = importlib.import_module("backend.governance.base")
         from backend.prompt_variants import (
             query_model_with_variants,
             query_models_parallel_with_variants
         )
-        monkeypatch.setattr(struct_b, "query_model", query_model_with_variants)
-        monkeypatch.setattr(struct_b, "query_models_parallel", query_models_parallel_with_variants)
+        # Both query_model and query_models_parallel are now in base class
+        monkeypatch.setattr(base_module, "query_model", query_model_with_variants)
+        monkeypatch.setattr(base_module, "query_models_parallel", query_models_parallel_with_variants)
 
-        from backend.governance.structure_b import MajorityVoteStructure
+        from backend.governance import MajorityVoteStructure
 
         structure = MajorityVoteStructure(
             council_models=VARIANT_MODELS,
