@@ -1,6 +1,15 @@
 {
-  "google/gemma-2-9b-it": 0.8534338358458962,
-  "qwen/qwen-2.5-7b-instruct": 0.8391959798994975,
-  "meta-llama/llama-3.1-8b-instruct": 0.8257956448911222,
-  "mistralai/mistral-7b-instruct": 0.7110552763819096
+  "sample_7": 0.8583333333333333,
+  "sample_0": 0.8541666666666666,
+  "google/gemma-2-9b-it": 0.8522408963585434,
+  "sample_6": 0.85,
+  "sample_5": 0.8458333333333333,
+  "sample_1": 0.8416666666666667,
+  "sample_2": 0.8416666666666667,
+  "sample_4": 0.8416666666666667,
+  "sample_8": 0.8416666666666667,
+  "qwen/qwen-2.5-7b-instruct": 0.8375350140056023,
+  "sample_3": 0.8333333333333334,
+  "meta-llama/llama-3.1-8b-instruct": 0.8298319327731093,
+  "mistralai/mistral-7b-instruct": 0.7135854341736695
 }

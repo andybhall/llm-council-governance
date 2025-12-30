@@ -4,54 +4,85 @@ LLM COUNCIL GOVERNANCE PILOT STUDY - ANALYSIS REPORT
 
 OVERVIEW
 ----------------------------------------
-Total trials: 1200
-Structures tested: 5
+Total trials: 1680
+Structures tested: 7
 Benchmarks used: 2
-Valid trials (with results): 1194
-Overall accuracy: 87.8%
+Valid trials (with results): 1668
+Overall accuracy: 87.3%
 
 INDIVIDUAL MODEL ACCURACY
 ----------------------------------------
-  gemma-2-9b-it: 85.3% (1019/1194)
-  qwen-2.5-7b-instruct: 83.9% (1002/1194)
-  llama-3.1-8b-instruct: 82.6% (986/1194)
-  mistral-7b-instruct: 71.1% (849/1194)
+  sample_7: 85.8% (206/240)
+  sample_0: 85.4% (205/240)
+  gemma-2-9b-it: 85.2% (1217/1428)
+  sample_6: 85.0% (204/240)
+  sample_5: 84.6% (203/240)
+  sample_1: 84.2% (202/240)
+  sample_2: 84.2% (202/240)
+  sample_4: 84.2% (202/240)
+  sample_8: 84.2% (202/240)
+  qwen-2.5-7b-instruct: 83.8% (1196/1428)
+  sample_3: 83.3% (200/240)
+  llama-3.1-8b-instruct: 83.0% (1185/1428)
+  mistral-7b-instruct: 71.4% (1019/1428)
 
 INDIVIDUAL MODEL ACCURACY BY BENCHMARK
 ----------------------------------------
   GSM8K:
-    qwen-2.5-7b-instruct: 90.9% (541/595)
-    gemma-2-9b-it: 86.7% (516/595)
-    llama-3.1-8b-instruct: 82.0% (488/595)
-    mistral-7b-instruct: 63.2% (376/595)
+    qwen-2.5-7b-instruct: 90.8% (645/710)
+    sample_0: 88.3% (106/120)
+    sample_7: 87.5% (105/120)
+    gemma-2-9b-it: 87.0% (618/710)
+    sample_1: 86.7% (104/120)
+    sample_4: 86.7% (104/120)
+    sample_8: 86.7% (104/120)
+    sample_2: 85.8% (103/120)
+    sample_6: 85.8% (103/120)
+    sample_5: 85.0% (102/120)
+    sample_3: 83.3% (100/120)
+    llama-3.1-8b-instruct: 82.1% (583/710)
+    mistral-7b-instruct: 62.8% (446/710)
   TruthfulQA:
-    gemma-2-9b-it: 84.0% (503/599)
-    llama-3.1-8b-instruct: 83.1% (498/599)
-    mistral-7b-instruct: 79.0% (473/599)
-    qwen-2.5-7b-instruct: 77.0% (461/599)
+    sample_5: 84.2% (101/120)
+    sample_6: 84.2% (101/120)
+    sample_7: 84.2% (101/120)
+    llama-3.1-8b-instruct: 83.8% (602/718)
+    gemma-2-9b-it: 83.4% (599/718)
+    sample_3: 83.3% (100/120)
+    sample_0: 82.5% (99/120)
+    sample_2: 82.5% (99/120)
+    sample_1: 81.7% (98/120)
+    sample_4: 81.7% (98/120)
+    sample_8: 81.7% (98/120)
+    mistral-7b-instruct: 79.8% (573/718)
+    qwen-2.5-7b-instruct: 76.7% (551/718)
 
 ACCURACY BY STRUCTURE
 ----------------------------------------
+  Agenda Setter + Veto: 86.3% (202/234)
   Independent → Deliberate → Synthesize: 90.8% (216/238)
   Independent → Deliberate → Vote: 87.8% (208/237)
   Independent → Majority Vote: 87.1% (209/240)
   Independent → Rank → Synthesize: 87.4% (209/239)
   Independent → Weighted Majority Vote: 85.8% (206/240)
+  Self-Consistency Vote: 85.8% (206/240)
 
 ACCURACY BY BENCHMARK
 ----------------------------------------
-  GSM8K: 89.2% (531/595)
-  TruthfulQA: 86.3% (517/599)
+  GSM8K: 88.6% (735/830)
+  TruthfulQA: 86.0% (721/838)
 
 ACCURACY MATRIX (Structure x Benchmark)
 ----------------------------------------
 benchmark                              GSM8K TruthfulQA
 structure                                              
+Agenda Setter + Veto                   84.3%      88.2%
 Independent → Deliberate → Synthesize  92.4%      89.2%
 Independent → Deliberate → Vote        91.5%      84.0%
 Independent → Majority Vote            88.3%      85.8%
 Independent → Rank → Synthesize        88.2%      86.7%
 Independent → Weighted Majority Vote   85.8%      85.8%
+Self-Consistency Vote                  89.2%      82.5%
 
 ACCURACY WITH 95% CONFIDENCE INTERVALS
 ----------------------------------------
@@ -60,12 +91,14 @@ ACCURACY WITH 95% CONFIDENCE INTERVALS
   Independent → Deliberate → Vote: 87.8% [83.0%, 91.3%]
   Independent → Deliberate → Synthesize: 90.8% [86.4%, 93.8%]
   Independent → Weighted Majority Vote: 85.8% [80.9%, 89.7%]
+  Agenda Setter + Veto: 86.3% [81.3%, 90.1%]
+  Self-Consistency Vote: 85.8% [80.9%, 89.7%]
 
 STATISTICAL TESTS
 ----------------------------------------
   Chi-square test:
-    Chi-square statistic: 2.94
-    p-value: 0.5671
+    Chi-square statistic: 3.75
+    p-value: 0.7098
     Interpretation: No significant difference between structures
 
 PAIRWISE COMPARISONS (McNemar's test, Bonferroni corrected)
@@ -78,28 +111,57 @@ PAIRWISE COMPARISONS (McNemar's test, Bonferroni corrected)
     Discordant pairs: 5 (1 s1 wins, 4 s2 wins)
   Independent → Majority Vote vs Independent → Weighted Majority Vote: +2.5% (p=1.0000)
     Discordant pairs: 2 (2 s1 wins, 0 s2 wins)
+  Independent → Majority Vote vs Agenda Setter + Veto: +2.5% (p=1.0000)
+    Discordant pairs: 6 (4 s1 wins, 2 s2 wins)
+  Independent → Majority Vote vs Self-Consistency Vote: +3.7% (p=1.0000)
+    Discordant pairs: 7 (5 s1 wins, 2 s2 wins)
   Independent → Rank → Synthesize vs Independent → Deliberate → Vote: -3.7% (p=1.0000)
     Discordant pairs: 5 (1 s1 wins, 4 s2 wins)
   Independent → Rank → Synthesize vs Independent → Deliberate → Synthesize: -6.2% (p=1.0000)
     Discordant pairs: 7 (1 s1 wins, 6 s2 wins)
   Independent → Rank → Synthesize vs Independent → Weighted Majority Vote: +0.0% (p=1.0000)
     Discordant pairs: 10 (5 s1 wins, 5 s2 wins)
+  Independent → Rank → Synthesize vs Agenda Setter + Veto: +0.0% (p=1.0000)
+    Discordant pairs: 6 (3 s1 wins, 3 s2 wins)
+  Independent → Rank → Synthesize vs Self-Consistency Vote: +1.3% (p=1.0000)
+    Discordant pairs: 7 (4 s1 wins, 3 s2 wins)
   Independent → Deliberate → Vote vs Independent → Deliberate → Synthesize: -2.5% (p=1.0000)
     Discordant pairs: 6 (2 s1 wins, 4 s2 wins)
   Independent → Deliberate → Vote vs Independent → Weighted Majority Vote: +3.7% (p=1.0000)
     Discordant pairs: 9 (6 s1 wins, 3 s2 wins)
+  Independent → Deliberate → Vote vs Agenda Setter + Veto: +3.7% (p=1.0000)
+    Discordant pairs: 9 (6 s1 wins, 3 s2 wins)
+  Independent → Deliberate → Vote vs Self-Consistency Vote: +5.0% (p=1.0000)
+    Discordant pairs: 8 (6 s1 wins, 2 s2 wins)
   Independent → Deliberate → Synthesize vs Independent → Weighted Majority Vote: +6.2% (p=1.0000)
     Discordant pairs: 7 (6 s1 wins, 1 s2 wins)
+  Independent → Deliberate → Synthesize vs Agenda Setter + Veto: +6.2% (p=1.0000)
+    Discordant pairs: 9 (7 s1 wins, 2 s2 wins)
+  Independent → Deliberate → Synthesize vs Self-Consistency Vote: +7.5% (p=1.0000)
+    Discordant pairs: 8 (7 s1 wins, 1 s2 wins)
+  Independent → Weighted Majority Vote vs Agenda Setter + Veto: +0.0% (p=1.0000)
+    Discordant pairs: 6 (3 s1 wins, 3 s2 wins)
+  Independent → Weighted Majority Vote vs Self-Consistency Vote: +1.3% (p=1.0000)
+    Discordant pairs: 7 (4 s1 wins, 3 s2 wins)
+  Agenda Setter + Veto vs Self-Consistency Vote: +1.3% (p=1.0000)
+    Discordant pairs: 9 (5 s1 wins, 4 s2 wins)
+
+PAIRED BOOTSTRAP COMPARISONS
+----------------------------------------
+  Baseline: Majority Vote
+
+  Rank → Synthesize vs baseline: +0.4% [-3.8%, 5.0%]
+  Deliberate → Vote vs baseline: +0.8% [-3.8%, 5.8%]
+  Deliberate → Synthesize vs baseline: +3.8% [-1.7%, 9.6%]
+  Weighted Majority Vote vs baseline: -1.3% [-4.2%, 1.2%]
+  Agenda Setter + Veto vs baseline: -1.0% [-6.2%, 4.0%]
+  Self-Consistency Vote vs baseline: -1.2% [-7.1%, 4.2%]
 
 T-TESTS: STRUCTURES VS BEST INDIVIDUAL MODEL
 ----------------------------------------
-  Best individual model: gemma-2-9b-it (85.8%)
+  Best individual model: sample_7 (85.8%)
 
-  Majority Vote: 87.1% vs 85.8% (diff=+1.3%, t=0.65, p=0.5138)
-  Rank → Synthesize: 87.4% vs 85.4% (diff=+2.1%, t=1.00, p=0.3183)
-  Deliberate → Vote: 87.8% vs 84.8% (diff=+3.0%, t=1.46, p=0.1448)
-  Deliberate → Synthesize: 90.8% vs 84.5% (diff=+6.3%, t=3.19, p=0.0016)*
-  Weighted Majority Vote: 85.8% vs 86.2% (diff=-0.4%, t=-0.24, p=0.8089)
+  Self-Consistency Vote: 85.8% vs 85.8% (diff=+0.0%, t=0.00, p=1.0000)
 
 DELIBERATION ANALYSIS
 ----------------------------------------
@@ -125,17 +187,30 @@ DELIBERATION ANALYSIS
     Net positive: deliberation fixes more than it breaks (+50)
     Simple majority vote may outperform deliberation by preserving independence
 
+  Influence patterns:
+    Most influential (convinced others to change):
+      gemma-2-9b-it: 119.7 times
+      llama-3.1-8b-instruct: 109.7 times
+      qwen-2.5-7b-instruct: 107.5 times
+    Most influenced (changed to follow others):
+      mistral-7b-instruct: 162.0 times
+      gemma-2-9b-it: 84.0 times
+      qwen-2.5-7b-instruct: 77.0 times
+
 TIMING SUMMARY (seconds)
 ----------------------------------------
+  Agenda Setter + Veto: mean=24.59s, std=24.00s
   Independent → Deliberate → Synthesize: mean=25.65s, std=73.68s
   Independent → Deliberate → Vote: mean=32.01s, std=132.04s
   Independent → Majority Vote: mean=18.82s, std=70.10s
   Independent → Rank → Synthesize: mean=20.54s, std=57.57s
   Independent → Weighted Majority Vote: mean=19.68s, std=67.42s
+  Self-Consistency Vote: mean=7.83s, std=2.25s
 
 ERRORS
 ----------------------------------------
-  Total errors: 6
+  Total errors: 12
+    Agenda Setter + Veto: 6
     Independent → Deliberate → Synthesize: 2
     Independent → Deliberate → Vote: 3
     Independent → Rank → Synthesize: 1
