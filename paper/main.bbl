@@ -1,0 +1,109 @@
+\begin{thebibliography}{16}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Arrow(1963)]{arrow1963social}
+Kenneth~J Arrow.
+\newblock \emph{Social Choice and Individual Values}.
+\newblock Yale University Press, New Haven, 2nd edition, 1963.
+
+\bibitem[Buchanan and Tullock(1962)]{buchanan1962calculus}
+James~M Buchanan and Gordon Tullock.
+\newblock \emph{The Calculus of Consent: Logical Foundations of Constitutional
+  Democracy}.
+\newblock University of Michigan Press, Ann Arbor, 1962.
+
+\bibitem[Cobbe et~al.(2021)Cobbe, Kosaraju, Bavarian, Chen, Jun, Kaiser,
+  Plappert, Tworek, Hilton, Nakano, Hesse, and Schulman]{cobbe2021training}
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz
+  Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano,
+  Christopher Hesse, and John Schulman.
+\newblock Training verifiers to solve math word problems.
+\newblock \emph{arXiv preprint arXiv:2110.14168}, 2021.
+
+\bibitem[Cohen(1989)]{cohen1989deliberation}
+Joshua Cohen.
+\newblock Deliberation and democratic legitimacy.
+\newblock In Alan Hamlin and Philip Pettit, editors, \emph{The Good Polity:
+  Normative Analysis of the State}, pages 17--34. Blackwell, Oxford, 1989.
+
+\bibitem[Condorcet(1785)]{condorcet1785essai}
+Marie Jean Antoine Nicolas de~Caritat Condorcet.
+\newblock \emph{Essai sur l'application de l'analyse {\`a} la probabilit{\'e}
+  des d{\'e}cisions rendues {\`a} la pluralit{\'e} des voix}.
+\newblock L'Imprimerie Royale, Paris, 1785.
+
+\bibitem[Dryzek and Niemeyer(2008)]{dryzek2008real}
+John~S Dryzek and Simon Niemeyer.
+\newblock Discursive representation.
+\newblock \emph{American Political Science Review}, 102\penalty0 (4):\penalty0
+  481--493, 2008.
+
+\bibitem[Du et~al.(2023)Du, Li, Torralba, Tenenbaum, and
+  Mordatch]{du2023improving}
+Yilun Du, Shuang Li, Antonio Torralba, Joshua~B Tenenbaum, and Igor Mordatch.
+\newblock Improving factuality and reasoning in language models through
+  multiagent debate.
+\newblock \emph{arXiv preprint arXiv:2305.14325}, 2023.
+
+\bibitem[Grofman et~al.(1983)Grofman, Owen, and Feld]{grofman1983information}
+Bernard Grofman, Guillermo Owen, and Scott~L Feld.
+\newblock Information pooling through majority-rule voting: Condorcet's jury
+  theorem with correlated votes.
+\newblock \emph{Journal of Economic Behavior \& Organization}, 4\penalty0
+  (2-3):\penalty0 147--160, 1983.
+
+\bibitem[Hong and Page(2004)]{hong2004groups}
+Lu~Hong and Scott~E Page.
+\newblock Groups of diverse problem solvers can outperform groups of
+  high-ability problem solvers.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 101\penalty0
+  (46):\penalty0 16385--16389, 2004.
+
+\bibitem[Janis(1982)]{janis1982groupthink}
+Irving~L Janis.
+\newblock \emph{Groupthink: Psychological Studies of Policy Decisions and
+  Fiascoes}.
+\newblock Houghton Mifflin, Boston, 2nd edition, 1982.
+
+\bibitem[Jiang et~al.(2023)Jiang, Ren, and Lin]{jiang2023llmblender}
+Dongfu Jiang, Xiang Ren, and Bill~Yuchen Lin.
+\newblock Llm-blender: Ensembling large language models with pairwise ranking
+  and generative fusion.
+\newblock \emph{arXiv preprint arXiv:2306.02561}, 2023.
+
+\bibitem[Karpathy(2024)]{karpathy2024llmcouncil}
+Andrej Karpathy.
+\newblock llm-council.
+\newblock \url{https://github.com/karpathy/llm-council}, 2024.
+\newblock GitHub repository.
+
+\bibitem[Lin et~al.(2022)Lin, Hilton, and Evans]{lin2022truthfulqa}
+Stephanie Lin, Jacob Hilton, and Owain Evans.
+\newblock Truthfulqa: Measuring how models mimic human falsehoods.
+\newblock \emph{arXiv preprint arXiv:2109.07958}, 2022.
+
+\bibitem[Ostrom(2010)]{ostrom2010polycentric}
+Elinor Ostrom.
+\newblock Polycentric systems for coping with collective action and global
+  environmental change.
+\newblock \emph{Global Environmental Change}, 20\penalty0 (4):\penalty0
+  550--557, 2010.
+
+\bibitem[Surowiecki(2004)]{surowiecki2004wisdom}
+James Surowiecki.
+\newblock \emph{The Wisdom of Crowds}.
+\newblock Doubleday, New York, 2004.
+
+\bibitem[Wang et~al.(2023)Wang, Wei, Schuurmans, Le, Chi, Narang, Chowdhery,
+  and Zhou]{wang2023selfconsistency}
+Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc Le, Ed~Chi, Sharan Narang,
+  Aakanksha Chowdhery, and Denny Zhou.
+\newblock Self-consistency improves chain of thought reasoning in language
+  models.
+\newblock \emph{arXiv preprint arXiv:2203.11171}, 2023.
+
+\end{thebibliography}

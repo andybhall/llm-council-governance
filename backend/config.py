@@ -80,5 +80,5 @@ COUNCIL_SIZES = [2, 3, 4, 5, 6]
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-# Default API timeout in seconds
-DEFAULT_API_TIMEOUT = float(os.getenv("API_TIMEOUT", "60.0"))
+# Default API timeout in seconds (90s with 7 retries = ample time)
+DEFAULT_API_TIMEOUT = float(os.getenv("API_TIMEOUT", "90.0"))

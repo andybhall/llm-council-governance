@@ -31,10 +31,15 @@ async def get_shared_client() -> httpx.AsyncClient:
             if _shared_client is None:
                 _shared_client = httpx.AsyncClient(
                     limits=httpx.Limits(
-                        max_connections=100,
-                        max_keepalive_connections=50,
+                        max_connections=20,  # Conservative limit to avoid overwhelming API
+                        max_keepalive_connections=10,
                     ),
-                    timeout=httpx.Timeout(DEFAULT_API_TIMEOUT),
+                    timeout=httpx.Timeout(
+                        connect=60.0,  # Connection timeout
+                        read=DEFAULT_API_TIMEOUT,  # Read timeout (180s)
+                        write=60.0,  # Write timeout
+                        pool=120.0,  # Pool timeout
+                    ),
                 )
     return _shared_client
 
@@ -68,8 +73,8 @@ def _is_retryable_error(exception: BaseException) -> bool:
 
 
 @retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(7),
+    wait=wait_exponential(multiplier=1, min=2, max=60),
     retry=retry_if_exception(_is_retryable_error),
     before_sleep=before_sleep_log(logger, logging.WARNING),
 )
@@ -81,21 +86,37 @@ async def _make_api_request(
     timeout: float,
 ) -> Dict[str, Any]:
     """Make API request with retry logic for transient failures."""
-    response = await client.post(
-        OPENROUTER_API_URL,
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-        },
-        timeout=timeout,
+    # Use explicit timeout object for per-request override
+    request_timeout = httpx.Timeout(
+        connect=30.0,  # Connection timeout
+        read=timeout,  # Main API timeout
+        write=30.0,  # Write timeout
+        pool=60.0,  # Pool timeout for waiting on connections
     )
-    response.raise_for_status()
-    return response.json()
+
+    async def do_request():
+        response = await client.post(
+            OPENROUTER_API_URL,
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": temperature,
+            },
+            timeout=request_timeout,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # Hard asyncio timeout as a fallback (timeout + 30s buffer)
+    try:
+        return await asyncio.wait_for(do_request(), timeout=timeout + 30)
+    except asyncio.TimeoutError:
+        # Convert to httpx exception for retry logic
+        raise httpx.ReadTimeout(f"Hard timeout after {timeout + 30}s")
 
 
 async def query_model(
@@ -117,8 +138,11 @@ async def query_model(
         Dict containing 'content' key with the model's response text
     """
     timeout = timeout if timeout is not None else DEFAULT_API_TIMEOUT
-    client = await get_shared_client()
-    data = await _make_api_request(client, model, messages, temperature, timeout)
+
+    # Use fresh client for each request to avoid stale connection issues
+    # in long-running experiments
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+        data = await _make_api_request(client, model, messages, temperature, timeout)
 
     # Extract content from OpenRouter response format
     content = data["choices"][0]["message"]["content"]

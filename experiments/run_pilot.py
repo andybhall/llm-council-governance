@@ -118,7 +118,7 @@ async def run_experiment(
     output_dir: str = "experiments/results",
     resume: bool = True,
     verbose: bool = True,
-    max_concurrent: int = 20,
+    max_concurrent: int = 10,
 ) -> pd.DataFrame:
     """
     Run the full pilot experiment with parallel trial execution.
@@ -131,7 +131,7 @@ async def run_experiment(
         output_dir: Directory to save results
         resume: Whether to resume from existing results
         verbose: Whether to print progress
-        max_concurrent: Maximum number of concurrent trials (default: 20)
+        max_concurrent: Maximum number of concurrent trials (default: 10)
 
     Returns:
         DataFrame with all experiment results
@@ -199,8 +199,9 @@ async def run_experiment(
     completed_count = [0]  # Use list for mutable reference
     last_save_count = [0]
 
-    # Per-trial timeout (5 minutes max per trial to prevent hangs)
-    trial_timeout = 300
+    # Per-trial timeout (10 minutes max per trial to prevent hangs)
+    # Increased from 300s to reduce timeouts on complex deliberation structures
+    trial_timeout = 600
 
     async def run_bounded_trial(trial_info: Dict[str, Any]) -> Dict[str, Any]:
         """Run a single trial with semaphore-bounded concurrency and timeout."""
@@ -270,8 +271,8 @@ async def run_experiment(
                         f"({100 * (completed_count[0] + len(completed)) / total_trials:.1f}%)"
                     )
 
-                # Save every 25 results instead of every single one
-                if completed_count[0] - last_save_count[0] >= 25:
+                # Save every 5 results for faster progress visibility
+                if completed_count[0] - last_save_count[0] >= 5:
                     save_results(results, output_dir)
                     last_save_count[0] = completed_count[0]
 
